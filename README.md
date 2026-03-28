@@ -206,6 +206,9 @@ electron/
 ├── main.ts                    # Electron 主进程
 └── preload.ts                 # 上下文桥接
 ```
+### Demo
+
+<video controls src="firefox_qNlCrhdrQI.mp4" title="Title"></video>
 
 ### License
 
