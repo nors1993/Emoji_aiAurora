@@ -125,8 +125,8 @@
 #### 安装
 
 ```bash
-git clone <repository-url>
-cd Emoji_AI
+git clone https://github.com/nors1993/Emoji_aiAurora.git
+cd Emoji_aiAurora
 npm install
 ```
 
@@ -284,8 +284,8 @@ MIT
 
 ```bash
 # Install
-git clone <repository-url>
-cd Emoji_AI
+git clone https://github.com/nors1993/Emoji_aiAurora.git
+cd Emoji_aiAurora
 npm install
 
 # Development (Web)
