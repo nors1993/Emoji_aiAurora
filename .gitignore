@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+release/
+release-test/
+*.asar
+
+# Logs
+logs/
+*.log
+dev.log
+
+# Debug files
+debug.png
+debug2.png
+debug_settings.py
+test_*.py
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test coverage
+coverage/
+
+# Electron builder
+*.blockmap
+
+# Misc
+*.bak
+*.orig
+
+# Project specific
+prompt.md
