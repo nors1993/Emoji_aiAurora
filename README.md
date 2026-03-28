@@ -207,8 +207,9 @@ electron/
 └── preload.ts                 # 上下文桥接
 ```
 ### Demo
-![alt text](image-1.png)
 ![alt text](image-2.png)
+
+![alt text](image-1.png)
 
 ### License
 
@@ -322,9 +323,9 @@ npm run electron:build
 5. Click the search icon in chat to enable search
 
 ### Demo
-![alt text](image-1.png)
 ![alt text](image-2.png)
 
+![alt text](image-1.png)
 
 ### License
 
