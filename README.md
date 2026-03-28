@@ -208,7 +208,7 @@ electron/
 ```
 ### Demo
 
-<video controls src="firefox_qNlCrhdrQI.mp4" title="Title"></video>
+![alt text](Demo.gif)
 
 ### License
 
@@ -320,6 +320,10 @@ npm run electron:build
 3. Enable "Web Search" in Settings
 4. Enter your Bocha AI API Key
 5. Click the search icon in chat to enable search
+
+### Demo
+
+![alt text](Demo.gif)
 
 ### License
 
