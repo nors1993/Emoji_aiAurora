@@ -26,7 +26,9 @@
 - 每种情绪都有独特的视觉表现（眼睛、嘴巴、眉毛、腮红颜色）和动态效果
 - 情绪检测链：JSON解析 → LLM二次分析 → 关键词回退
 
-#### 🎤 语音交互
+#### 🎤 语音交互 (⚠️ 当前版本暂不支持)
+
+> ⚠️ **注意**：当前版本语音功能暂不可用，正在开发中。
 
 - 语音输入：按住麦克风按钮说话，自动识别转为文字
 - 语音输出：开启后，AI回复会自动朗读
@@ -233,7 +235,9 @@ MIT
 - Each emotion has unique visual expressions (eyes, mouth, eyebrows, cheek color) and dynamic effects
 - Emotion detection chain: JSON parsing → LLM analysis → Keyword fallback
 
-#### 🎤 Voice Interaction
+#### 🎤 Voice Interaction (⚠️ Not Supported in Current Version)
+
+> ⚠️ **Note**: Voice functionality is currently unavailable and under development.
 
 - Voice input: Hold microphone button to speak, auto-convert to text
 - Voice output: AI responses can be auto-spoken
