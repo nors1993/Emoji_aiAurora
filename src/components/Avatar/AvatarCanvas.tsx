@@ -270,7 +270,7 @@ interface EyebrowConfig {
   rightRotation?: number     // 右侧眉毛角度（用于不对称）
 }
 
-// 眉毛配置映射 - 每个情绪独特的眉毛
+// 眉毛配置映射 - 每个情绪独特的眉毛（增强不对称效果）
 const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
   // 开心 - 放松微抬
   happy: {
@@ -320,13 +320,13 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     verticalOffset: 0.08,
     isAsymmetric: false
   },
-  // 厌恶 - 不对称皱眉
+  // 厌恶 - 不对称皱眉（更明显的差异）
   disgusted: {
-    rotation: 0.1,
+    rotation: 0.15,
     verticalOffset: 0,
     isAsymmetric: true,
-    leftRotation: 0.25,
-    rightRotation: 0.1
+    leftRotation: 0.35,
+    rightRotation: 0.05
   },
   // 中性 - 平板
   neutral: {
@@ -334,13 +334,13 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     verticalOffset: 0,
     isAsymmetric: false
   },
-  // 思考 - 一侧抬起
+  // 思考 - 一侧抬起（更明显）
   thinking: {
     rotation: 0,
     verticalOffset: 0,
     isAsymmetric: true,
-    leftRotation: -0.2,
-    rightRotation: 0
+    leftRotation: -0.3,
+    rightRotation: 0.05
   },
   // 困倦 - 下垂
   sleepy: {
@@ -348,53 +348,61 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     verticalOffset: -0.05,
     isAsymmetric: false
   },
-  // 困惑 - 不对称
+  // 困惑 - 不对称（更明显）
   confused: {
     rotation: 0,
     verticalOffset: 0,
     isAsymmetric: true,
-    leftRotation: -0.25,
-    rightRotation: 0.05
+    leftRotation: -0.35,
+    rightRotation: 0.1
   },
-  // 窘迫 - 略抬
+  // 窘迫 - 不对称（轻微不对称，表现尴尬）
   embarrassed: {
     rotation: -0.1,
     verticalOffset: 0,
-    isAsymmetric: false
+    isAsymmetric: true,
+    leftRotation: -0.05,
+    rightRotation: -0.15
   },
-  // 无助 - 轻微内抬
+  // 无助 - 不对称（表现无奈）
   helpless: {
     rotation: -0.05,
     verticalOffset: 0.03,
-    isAsymmetric: false
+    isAsymmetric: true,
+    leftRotation: 0.05,
+    rightRotation: -0.1
   },
-  // 嫉妒 - 不对称一下沉
+  // 嫉妒 - 不对称（更明显的差异）
   jealous: {
     rotation: 0,
     verticalOffset: 0,
     isAsymmetric: true,
-    leftRotation: 0.15,
-    rightRotation: -0.1
+    leftRotation: 0.25,
+    rightRotation: -0.15
   },
-  // 怅然若失 - 柔和拱形
+  // 怅然若失 - 不对称（表现幽怨）
   longing: {
     rotation: -0.1,
     verticalOffset: 0,
-    isAsymmetric: false
+    isAsymmetric: true,
+    leftRotation: -0.05,
+    rightRotation: -0.2
   },
-  // 害羞 - 轻锁
+  // 害羞 - 不对称（目光躲避）
   shy: {
     rotation: -0.08,
     verticalOffset: 0,
-    isAsymmetric: false
+    isAsymmetric: true,
+    leftRotation: -0.15,
+    rightRotation: 0
   },
   // 调皮 - 不对称
   playful: {
     rotation: 0,
     verticalOffset: 0,
     isAsymmetric: true,
-    leftRotation: -0.3,
-    rightRotation: 0.05
+    leftRotation: -0.35,
+    rightRotation: 0.1
   },
   // 自豪 - 略抬
   proud: {
@@ -588,6 +596,8 @@ function AuroraAvatar() {
   
   const [shakeOffset, setShakeOffset] = useState({ x: 0, y: 0 })
   const [pulseScale, setPulseScale] = useState(1)
+  const [breathScale, setBreathScale] = useState(1)
+  const [eyeLookOffset, setEyeLookOffset] = useState({ x: 0, y: 0 }) // 眼睛微动效果
   
   // Intro mode: 随机循环展示情绪，每2秒切换一次
   // 模型响应中(isLoading=true)不更新，保持上一个稳定表情
@@ -615,18 +625,25 @@ function AuroraAvatar() {
   // Get color for current emotion
   const targetColor = EMOTION_COLORS[displayEmotion] || '#7C3AED'
   
-  // Animate color based on emotion
+  // Animate color and opacity based on emotion (smooth transition)
   useEffect(() => {
     if (!meshRef.current) return
     
     const material = meshRef.current.material as THREE.MeshStandardMaterial
     const color = new THREE.Color(targetColor)
     
+    // 不同的情绪有不透明的呼吸效果
+    const targetOpacity = isIntense ? 0.95 : 0.85
+    const targetEmissive = isIntense ? 0.6 : 0.3
+    
     // Smooth color transition
-    const lerpFactor = isIntense ? 0.15 : 0.05
+    const lerpFactor = isIntense ? 0.12 : 0.04
     const animateColor = () => {
       material.color.lerp(color, lerpFactor)
       material.emissive.lerp(color, lerpFactor)
+      // 平滑过渡不透明度和发光强度
+      material.opacity = THREE.MathUtils.lerp(material.opacity, targetOpacity, lerpFactor)
+      material.emissiveIntensity = THREE.MathUtils.lerp(material.emissiveIntensity, targetEmissive, lerpFactor)
     }
     
     const interval = setInterval(animateColor, 16)
@@ -654,28 +671,57 @@ function AuroraAvatar() {
     return () => clearInterval(shakeInterval)
   }, [displayEmotion, isAngry])
   
-  // Pulse effect for intense emotions
+  // Pulse effect for intense emotions + subtle breathing for all emotions
   useEffect(() => {
     if (!isIntense && !isLoading) {
       setPulseScale(1)
+      setBreathScale(1)
       return
     }
     
     let startTime = Date.now()
     const pulseInterval = setInterval(() => {
       const elapsed = Date.now() - startTime
+      // 高强度情绪：快速脉动
       const frequency = displayEmotion === 'excited' ? 8 : 4
       const amplitude = displayEmotion === 'excited' ? 0.15 : 0.08
       const scale = 1 + Math.sin(elapsed * frequency * 0.001) * amplitude
       setPulseScale(scale)
+      
+      // 微妙的呼吸效果（所有情绪都有）
+      const breathFreq = 1.5 // 更慢的呼吸
+      const breathAmp = 0.02 // 非常微妙的呼吸
+      const breath = 1 + Math.sin(elapsed * breathFreq * 0.001) * breathAmp
+      setBreathScale(breath)
     }, 16)
     
     return () => clearInterval(pulseInterval)
   }, [displayEmotion, isIntense, isLoading])
   
-  // Calculate scale with pulse effect
+  // Calculate scale with pulse effect + breathing
   const baseScale = isLoading ? 1.05 : 1
-  const finalScale = baseScale * pulseScale
+  const finalScale = baseScale * pulseScale * breathScale
+
+  // 微表情：眼睛微动效果（根据情绪类型）
+  useEffect(() => {
+    // 特定情绪有更明显的眼睛移动
+    const lookAroundEmotions = ['thinking', 'confused', 'concerned', 'longing']
+    const shouldLookAround = lookAroundEmotions.includes(displayEmotion)
+    
+    if (!shouldLookAround && !isLoading) {
+      setEyeLookOffset({ x: 0, y: 0 })
+      return
+    }
+    
+    const lookInterval = setInterval(() => {
+      const intensity = shouldLookAround ? 0.03 : 0.015
+      const x = (Math.random() - 0.5) * intensity
+      const y = (Math.random() - 0.5) * intensity
+      setEyeLookOffset({ x, y })
+    }, 2000) // 每2秒轻微移动
+    
+    return () => clearInterval(lookInterval)
+  }, [displayEmotion, isLoading])
 
   return (
     <group ref={groupRef} position={[shakeOffset.x, shakeOffset.y, 0]}>
@@ -724,8 +770,8 @@ function AuroraAvatar() {
           )}
           
           {/* Eyes - now with side prop for asymmetric expressions */}
-          <Eye position={[-0.4, 0.2, 1.2]} emotion={displayEmotion} side="left" />
-          <Eye position={[0.4, 0.2, 1.2]} emotion={displayEmotion} side="right" />
+          <Eye position={[-0.4, 0.2, 1.2]} emotion={displayEmotion} side="left" lookOffset={eyeLookOffset} />
+          <Eye position={[0.4, 0.2, 1.2]} emotion={displayEmotion} side="right" lookOffset={eyeLookOffset} />
           
           {/* Mouth */}
           <Mouth position={[0, -0.3, 1.3]} emotion={displayEmotion} />
@@ -742,13 +788,38 @@ function AuroraAvatar() {
   )
 }
 
-// Eye component - 20 emotions with unique eye expressions
-function Eye({ position, emotion, side }: { position: [number, number, number]; emotion: Emotion; side: 'left' | 'right' }) {
+// Eye component - 20 emotions with unique eye expressions + 自动眨眼 + 微表情
+function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { position: [number, number, number]; emotion: Emotion; side: 'left' | 'right'; lookOffset?: { x: number; y: number } }) {
   const config = EYE_CONFIGS[emotion]
   const eyebrowConfig = EYEBROW_CONFIGS[emotion]
+  const [isBlinking, setIsBlinking] = useState(false)
+  
+  // 自动眨眼动画（对于sleepy等低唤醒情绪更频繁）
+  useEffect(() => {
+    // 困倦、悲伤、平静等情绪眨眼更频繁
+    const blinkEmotions = ['sleepy', 'sad', 'neutral', 'thinking', 'helpless', 'longing']
+    const isFrequentBlink = blinkEmotions.includes(emotion)
+    
+    const blinkInterval = isFrequentBlink ? 2500 : 4000 // 困倦时2.5秒，其他4秒
+    
+    const timeout = setTimeout(() => {
+      setIsBlinking(true)
+      setTimeout(() => setIsBlinking(false), 150) // 眨眼持续150ms
+    }, Math.random() * 1000 + 500) // 随机延迟0.5-1.5秒后开始
+    
+    const interval = setInterval(() => {
+      setIsBlinking(true)
+      setTimeout(() => setIsBlinking(false), 150)
+    }, blinkInterval)
+    
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
+  }, [emotion])
   
   // 处理 playful 眨眼：左眼闭上，右眼睁开
-  const shouldClose = config.isWink ? (side === 'left') : config.isClosed
+  const shouldClose = config.isWink ? (side === 'left') : (config.isClosed || isBlinking)
   
   // 处理不对称眼睛（困惑、厌恶等）
   let eyeScaleX = config.eyeScale[0]
@@ -786,7 +857,7 @@ function Eye({ position, emotion, side }: { position: [number, number, number]; 
   const isWide = config.eyeShape === 'wide'
   
   return (
-    <group position={position} scale={[eyeScaleX, eyeScaleY, 1]}>
+    <group position={[position[0] + lookOffset.x, position[1] + lookOffset.y, position[2]]} scale={[eyeScaleX, eyeScaleY, 1]}>
       {/* Eye white */}
       <mesh>
         {shouldClose ? (
@@ -1108,17 +1179,43 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
   )
 }
 
-// Cheek component - multi-color cheek support
+// Cheek component - multi-color cheek support with smooth transitions
 function Cheek({ position, emotion }: { position: [number, number, number]; emotion: Emotion }) {
   const config = CHEEK_CONFIGS[emotion]
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [pulseOpacity, setPulseOpacity] = useState(0)
+  
+  // 高情绪强度的腮红有脉动效果
+  const cheekEmotions = ['excited', 'love', 'embarrassed', 'shy', 'playful', 'happy']
+  const hasCheekPulse = cheekEmotions.includes(emotion)
+  
+  useEffect(() => {
+    if (!hasCheekPulse || config.opacity < 0.3) {
+      setPulseOpacity(0)
+      return
+    }
+    
+    let startTime = Date.now()
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const frequency = 2 // 慢速脉动
+      const amplitude = config.opacity * 0.2
+      const pulse = Math.sin(elapsed * frequency * 0.001) * amplitude
+      setPulseOpacity(pulse)
+    }, 16)
+    
+    return () => clearInterval(interval)
+  }, [emotion, hasCheekPulse, config.opacity])
+  
+  const finalOpacity = Math.max(0, Math.min(1, config.opacity + pulseOpacity))
   
   return (
-    <mesh position={position}>
+    <mesh ref={meshRef} position={position}>
       <circleGeometry args={[0.15, 32]} />
       <meshBasicMaterial 
         color={config.color} 
         transparent 
-        opacity={config.opacity}
+        opacity={finalOpacity}
         side={THREE.DoubleSide}
       />
     </mesh>
