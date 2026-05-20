@@ -76,8 +76,8 @@ function loadSettingsFromStorage(): Settings {
       const parsed = JSON.parse(stored)
       return { ...defaultSettings, ...parsed }
     }
-  } catch {
-    // localStorage 读取失败，使用默认值
+  } catch (e) {
+    console.error('[Settings] Failed to load from localStorage:', e)
   }
   return defaultSettings
 }
@@ -85,7 +85,8 @@ function loadSettingsFromStorage(): Settings {
 function loadPersonalityFromStorage(): string {
   try {
     return localStorage.getItem(PERSONALITY_KEY) || 'default'
-  } catch {
+  } catch (e) {
+    console.error('[Settings] Failed to load personality:', e)
     return 'default'
   }
 }
@@ -97,7 +98,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   addMessage: (message) => {
     const newMessage: Message = {
       ...message,
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now()
     }
     set((state) => ({

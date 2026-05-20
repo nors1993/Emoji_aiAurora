@@ -101,17 +101,27 @@ function registerShortcuts() {
   })
 }
 
+const ALLOWED_SETTING_KEYS = new Set([
+  'windowBounds', 'apiProvider', 'apiUrl', 'apiKey', 'modelName',
+  'ollamaUrl', 'avatarEmotion', 'voiceEnabled', 'volume'
+])
+
 // IPC Handlers for settings
 ipcMain.handle('get-settings', () => {
   return settings
 })
 
-ipcMain.handle('set-setting', (_, key: string, value: unknown) => {
+ipcMain.handle('set-setting', (_event: Electron.IpcMainInvokeEvent, key: string, value: unknown) => {
+  if (typeof key !== 'string' || !ALLOWED_SETTING_KEYS.has(key)) {
+    log.warn(`Blocked attempt to set unknown setting: ${key}`)
+    return false
+  }
   setSetting(key, value)
   return true
 })
 
-ipcMain.handle('get-setting', (_, key: string) => {
+ipcMain.handle('get-setting', (_event: Electron.IpcMainInvokeEvent, key: string) => {
+  if (typeof key !== 'string') return undefined
   return getSetting(key)
 })
 

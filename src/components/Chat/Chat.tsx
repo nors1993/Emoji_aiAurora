@@ -81,7 +81,7 @@ export default function Chat() {
     return () => {
       audioCaptureRef.current?.stop()
       ttsClientRef.current?.stop()
-      audioCtxRef.current?.close()
+      audioCtxRef.current?.close().catch(e => console.warn('[Chat] AudioContext close:', e))
     }
   }, [])
 
@@ -100,7 +100,8 @@ export default function Chat() {
       return new Promise((resolve) => {
         source.onended = () => resolve()
       })
-    } catch {
+    } catch (e) {
+      console.warn('[Chat] Audio playback failed:', e)
     }
   }, [])
 

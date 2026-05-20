@@ -37,8 +37,8 @@ export class AudioCapture {
 
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      this.callbacks.onError('Microphone access denied')
+    } catch (e) {
+      this.callbacks.onError(`Microphone access denied: ${e instanceof Error ? e.message : e}`)
       return
     }
 

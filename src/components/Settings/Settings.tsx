@@ -17,7 +17,8 @@ function loadFromStorage(): Record<string, unknown> | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     return stored ? JSON.parse(stored) : null
-  } catch {
+  } catch (e) {
+    console.warn('[Settings] Failed to load from localStorage:', e)
     return null
   }
 }
@@ -25,7 +26,8 @@ function loadFromStorage(): Record<string, unknown> | null {
 function loadPersonalityFromStorage(): string {
   try {
     return localStorage.getItem(PERSONALITY_KEY) || 'default'
-  } catch {
+  } catch (e) {
+    console.warn('[Settings] Failed to load personality:', e)
     return 'default'
   }
 }
@@ -166,8 +168,8 @@ export default function Settings({ onClose }: SettingsProps) {
             setPersonality(pers as string)
           }
         })
-      }).catch(() => {
-        // Fallback to localStorage
+      }).catch((e: unknown) => {
+        console.warn('[Settings] Electron store load failed, falling back to localStorage:', e)
         const stored = loadFromStorage()
         if (stored) {
           setLocalSettings(prev => ({ ...prev, ...stored } as typeof prev))

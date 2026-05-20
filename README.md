@@ -1,6 +1,6 @@
 # aiAurora ✨
 
-*最后更新: 2026-05-20*
+*最后更新: 2026-05-21*
 
 [English](#english) | [中文](#中文)
 
@@ -260,6 +260,19 @@ electron/
 ![alt text](image-2.png)
 
 ![alt text](image-1.png)
+
+### 更新日志
+
+#### 2026-05-21 — 安全加固与错误处理优化
+
+| 类别 | 修改内容 | 文件 |
+|------|---------|------|
+| 🔴 安全 | 删除 LLM 请求中的 API Key 日志泄露 | `src/utils/llm.ts` |
+| 🔴 安全 | 删除 WebSearch 中的 API Key 长度日志 | `src/utils/webSearch.ts` |
+| 🔴 安全 | Electron IPC 添加设置 key 白名单校验 | `electron/main.ts` |
+| 🟠 错误处理 | 修复 15 处空 catch 块 — 补充日志与错误传播 | 涉及 8 个文件 |
+| 🟡 弃用API | `.substr(2,9)` → `.substring(2,11)` | `src/stores/chatStore.ts` |
+| 🟡 超时 | `getOllamaModels` 添加 5s 超时控制 | `src/utils/llm.ts` |
 
 ### License
 

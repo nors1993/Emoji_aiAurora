@@ -28,7 +28,7 @@ export async function* consumeEventSourceStream(
                   yield content
                 }
               } catch {
-                // Skip invalid JSON
+                // Skip malformed SSE data lines
               }
             }
           }
@@ -57,7 +57,7 @@ export async function* consumeEventSourceStream(
               yield content
             }
           } catch {
-            // Skip invalid JSON lines
+            // Skip malformed JSON lines in buffer
           }
         }
       }

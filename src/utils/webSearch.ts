@@ -49,7 +49,7 @@ export async function webSearch(query: string, searchApiKey?: string, searchApiU
   // 2. 尝试博查AI搜索 (国内可用!)
   if (searchApiKey) {
     try {
-      console.log('[WebSearch] Trying Bocha AI Search...', `API Key length: ${searchApiKey.length}`)
+      console.log('[WebSearch] Trying Bocha AI Search...')
       const bochaResult = await searchWithBochaAI(cleanQuery, searchApiKey)
       if (bochaResult.results.length > 0) {
         console.log('[WebSearch] Bocha AI succeeded with', bochaResult.results.length, 'results')

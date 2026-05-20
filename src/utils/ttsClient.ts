@@ -99,6 +99,7 @@ export class TTSClient {
               sampleRate: data.sample_rate,
             })
           } catch {
+            // Skip malformed TTS chunk
           }
         }
       }

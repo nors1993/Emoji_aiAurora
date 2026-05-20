@@ -89,7 +89,9 @@ function App() {
         try {
           const stored = JSON.parse(e.newValue)
           setSettings(stored as any)
-        } catch {}
+        } catch (e) {
+          console.error('[App] Failed to parse storage event:', e)
+        }
       }
     }
     window.addEventListener('storage', handleStorageChange)

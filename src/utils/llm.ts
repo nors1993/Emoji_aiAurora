@@ -172,7 +172,7 @@ export function parseEmotionFromResponse(text: string, isComplete: boolean = fal
         }
       }
     } catch {
-      // JSON parsing failed, continue below
+      // LLM response is not JSON, fall back to keyword detection
     }
   }
   
@@ -193,11 +193,7 @@ export async function sendToLLM(
 ): Promise<string> {
   const { apiProvider, apiUrl, apiKey, modelName, ollamaUrl } = settings
   
-  console.log('=== LLM REQUEST ===')
-  console.log('apiProvider:', apiProvider)
-  console.log('apiUrl:', apiUrl)
-  console.log('modelName:', modelName)
-  console.log('apiKey (first 10 chars):', apiKey.substring(0, 10))
+  console.log('[LLM] Request:', apiProvider, modelName)
   
   const apiMessages = [
     { role: 'system' as const, content: systemPrompt },
@@ -325,7 +321,7 @@ async function sendToOllama(
             // 流式传输期间不做情绪检测，保持 "thinking" 状态避免表情闪烁
           }
         } catch {
-          // Skip invalid JSON
+          // Skip non-JSON Ollama response lines
         }
       }
     }
@@ -349,7 +345,8 @@ export async function checkOllamaConnection(url: string): Promise<boolean> {
       signal: AbortSignal.timeout(5000)
     })
     return response.ok
-  } catch {
+  } catch (e) {
+    console.warn('[Ollama] Connection check failed:', e)
     return false
   }
 }
@@ -357,12 +354,15 @@ export async function checkOllamaConnection(url: string): Promise<boolean> {
 // Get available Ollama models
 export async function getOllamaModels(url: string): Promise<string[]> {
   try {
-    const response = await fetch(`${url}/api/tags`)
+    const response = await fetch(`${url}/api/tags`, {
+      signal: AbortSignal.timeout(5000)
+    })
     if (!response.ok) return []
     
     const data = await response.json()
     return data.models?.map((m: { name: string }) => m.name) || []
-  } catch {
+  } catch (e) {
+    console.warn('[Ollama] Failed to fetch models:', e)
     return []
   }
 }
