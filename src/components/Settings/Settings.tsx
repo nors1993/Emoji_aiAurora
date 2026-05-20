@@ -212,7 +212,15 @@ export default function Settings({ onClose }: SettingsProps) {
         language: localSettings.language || 'zh-CN',
         webSearchEnabled: localSettings.webSearchEnabled || false,
         searchApiKey: localSettings.searchApiKey || '',
-        searchApiUrl: localSettings.searchApiUrl || ''
+        searchApiUrl: localSettings.searchApiUrl || '',
+        asrEnabled: localSettings.asrEnabled || false,
+        asrUrl: localSettings.asrUrl || 'http://localhost:8001',
+        asrApiKey: localSettings.asrApiKey || 'sk-funasr-demo',
+        ttsEnabled: localSettings.ttsEnabled || false,
+        ttsUrl: localSettings.ttsUrl || 'http://localhost:8002',
+        ttsApiKey: localSettings.ttsApiKey || 'sk-qwen3tts-demo',
+        ttsSpeaker: localSettings.ttsSpeaker || 'Vivian',
+        ttsLanguage: localSettings.ttsLanguage || 'Chinese'
       }
       
       console.log('>>> Complete settings to save:', JSON.stringify(settingsToSave))
@@ -481,6 +489,100 @@ export default function Settings({ onClose }: SettingsProps) {
                   <p className="setting-hint">
                     填写自定义端点，不填则默认使用博查AI (国内快速)
                   </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Voice Service Settings */}
+          <div className="settings-section">
+            <h3>Voice Service Settings</h3>
+            <p className="setting-hint">
+              配置自定义语音服务以替代浏览器内置语音功能（需要本地运行 ASR / TTS 推理服务）
+            </p>
+
+            {/* ASR */}
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={localSettings.asrEnabled}
+                  onChange={e => setLocalSettings({ ...localSettings, asrEnabled: e.target.checked })}
+                />
+                <span>Enable ASR Service (语音识别)</span>
+              </label>
+            </div>
+            {localSettings.asrEnabled && (
+              <>
+                <div className="form-group">
+                  <label>ASR Server URL</label>
+                  <input
+                    type="text"
+                    value={localSettings.asrUrl}
+                    onChange={e => setLocalSettings({ ...localSettings, asrUrl: e.target.value })}
+                    placeholder="http://localhost:8001"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>ASR API Key</label>
+                  <input
+                    type="password"
+                    value={localSettings.asrApiKey}
+                    onChange={e => setLocalSettings({ ...localSettings, asrApiKey: e.target.value })}
+                    placeholder="sk-funasr-demo"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* TTS */}
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={localSettings.ttsEnabled}
+                  onChange={e => setLocalSettings({ ...localSettings, ttsEnabled: e.target.checked })}
+                />
+                <span>Enable TTS Service (语音合成)</span>
+              </label>
+            </div>
+            {localSettings.ttsEnabled && (
+              <>
+                <div className="form-group">
+                  <label>TTS Server URL</label>
+                  <input
+                    type="text"
+                    value={localSettings.ttsUrl}
+                    onChange={e => setLocalSettings({ ...localSettings, ttsUrl: e.target.value })}
+                    placeholder="http://localhost:8002"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>TTS API Key</label>
+                  <input
+                    type="password"
+                    value={localSettings.ttsApiKey}
+                    onChange={e => setLocalSettings({ ...localSettings, ttsApiKey: e.target.value })}
+                    placeholder="sk-qwen3tts-demo"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>TTS Speaker</label>
+                  <input
+                    type="text"
+                    value={localSettings.ttsSpeaker}
+                    onChange={e => setLocalSettings({ ...localSettings, ttsSpeaker: e.target.value })}
+                    placeholder="Vivian"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>TTS Language</label>
+                  <input
+                    type="text"
+                    value={localSettings.ttsLanguage}
+                    onChange={e => setLocalSettings({ ...localSettings, ttsLanguage: e.target.value })}
+                    placeholder="Chinese"
+                  />
                 </div>
               </>
             )}

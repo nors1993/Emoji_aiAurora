@@ -354,6 +354,48 @@ export interface Settings {
   webSearchEnabled: boolean  // 联网搜索功能开关
   searchApiKey: string  // 搜索 API Key (支持 SerpAPI, Bing, etc.)
   searchApiUrl: string  // 搜索 API 端点 (可选，默认使用免费搜索)
+
+  // ASR (语音识别) 配置
+  asrEnabled: boolean      // 使用自定义 ASR 服务
+  asrUrl: string           // Fun-ASR 服务器 WebSocket URL
+  asrApiKey: string        // Fun-ASR API Key
+
+  // TTS (语音合成) 配置
+  ttsEnabled: boolean      // 使用自定义 TTS 服务
+  ttsUrl: string           // Qwen3-TTS 服务器 URL
+  ttsApiKey: string        // Qwen3-TTS API Key
+  ttsSpeaker: string       // TTS 发言人 (如 Vivian)
+  ttsLanguage: string      // TTS 语言 (如 Chinese)
+}
+
+// ── Emotion-to-TTS instruct mapping ─────────────────────────────────────────
+
+const EMOTION_INSTRUCT: Record<Emotion, string> = {
+  happy: '用开心愉悦的语气说',
+  sad: '用悲伤难过的语气说',
+  angry: '用生气不满的语气说',
+  surprised: '用惊讶意外的语气说',
+  fearful: '用害怕担心的语气说',
+  disgusted: '用嫌弃厌烦的语气说',
+  neutral: '用平静自然的语气说',
+  excited: '用兴奋激动的语气说',
+  thinking: '用思考迟疑的语气说',
+  sleepy: '用困倦慵懒的语气说',
+  love: '用温柔爱意的语气说',
+  concerned: '用关切担心的语气说',
+  confused: '用困惑不解的语气说',
+  embarrassed: '用害羞不好意思的语气说',
+  helpless: '用无奈宠溺的语气说',
+  jealous: '用吃醋不满的语气说',
+  longing: '用怅然若失的语气说',
+  shy: '用害羞腼腆的语气说',
+  playful: '用调皮活泼的语气说',
+  proud: '用自豪得意的语气说',
+  grateful: '用感激开心的语气说',
+}
+
+export function emotionToInstruct(emotion: Emotion): string {
+  return EMOTION_INSTRUCT[emotion] || '用平静自然的语气说'
 }
 
 export interface ChatState {

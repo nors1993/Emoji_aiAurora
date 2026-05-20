@@ -53,7 +53,19 @@ const defaultSettings: Settings = {
   language: 'zh-CN',  // 默认中文
   webSearchEnabled: false,  // 默认关闭联网搜索
   searchApiKey: '',  // 搜索 API Key
-  searchApiUrl: ''   // 搜索 API 端点 (可选)
+  searchApiUrl: '',   // 搜索 API 端点 (可选)
+
+  // ASR 配置
+  asrEnabled: false,
+  asrUrl: 'http://localhost:8001',
+  asrApiKey: 'sk-funasr-demo',
+
+  // TTS 配置
+  ttsEnabled: false,
+  ttsUrl: 'http://localhost:8002',
+  ttsApiKey: 'sk-qwen3tts-demo',
+  ttsSpeaker: 'Vivian',
+  ttsLanguage: 'Chinese',
 }
 
 // 在 store 创建时同步读取 localStorage，确保首次渲染就使用用户配置

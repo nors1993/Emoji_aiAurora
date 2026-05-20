@@ -1,5 +1,7 @@
 # aiAurora ✨
 
+*最后更新: 2026-05-20*
+
 [English](#english) | [中文](#中文)
 
 ---
@@ -26,13 +28,22 @@
 - 每种情绪都有独特的视觉表现（眼睛、嘴巴、眉毛、腮红颜色）和动态效果
 - 情绪检测链：JSON解析 → LLM二次分析 → 关键词回退
 
-#### 🎤 语音交互 (⚠️ 当前版本暂不支持)
+#### 🎤 ASR 语音识别
 
-> ⚠️ **注意**：当前版本语音功能暂不可用，正在开发中。
+- **语音输入**：点击话筒 🎤 按钮激活，长按 "Hold to speak" 录制麦克风
+- **本地 ASR 推理**：基于 FunASR (SenseVoice + Qwen3-0.6B) 模型，16kHz PCM 实时解码
+- **交互方式**：按下录音 → 松开自动发送 → ASR 转文字 → 送入聊天窗口 → LLM 回复
+- **可配置**：Settings 中可设置 ASR Server URL 和 API Key，默认 `http://localhost:8001`
 
-- 语音输入：按住麦克风按钮说话，自动识别转为文字
-- 语音输出：开启后，AI回复会自动朗读
-- 支持多语言识别
+#### 🔊 TTS 语音合成
+
+- **语音输出**：点击喇叭 🔊 按钮激活，LLM 回复自动朗读
+- **本地 TTS 推理**：基于 Qwen3-TTS-12Hz-1.7B 模型，支持 21 种情绪语调
+- **情绪语音**：TTS 语气与 Avatar 表情完全一致（开心、悲伤、温柔、调皮等）
+- **流式播放**：逐句生成、逐句播放，减少等待延迟
+- **可配置**：Settings 中可设置 TTS Server URL、API Key、发言人、语言，默认 `http://localhost:8002`
+
+> 语音服务需要在本地分别启动 ASR 和 TTS 推理服务，见下方"语音服务"章节。
 
 #### 🔍 联网搜索
 
@@ -94,6 +105,11 @@
 │  ├── 腮红组件 (颜色 + 透明度)                                │
 │  └── 粒子系统 (50个浮动粒子)                                 │
 ├─────────────────────────────────────────────────────────────┤
+│                      语音推理服务                              │
+│  models_infer/                                              │
+│  ├── funasr_server.py (ASR, 端口 8001)                      │
+│  └── qwen3_tts_server.py (TTS, 端口 8002)                   │
+├─────────────────────────────────────────────────────────────┤
 │                      桌面端 (可选)                            │
 │  Electron 41 + electron-builder                             │
 │  ├── main.ts (窗口、IPC、全局快捷键)                         │
@@ -112,7 +128,8 @@
 | Markdown   | react-markdown 9.x                                       |
 | 大语言模型 | OpenAI 兼容 API, Ollama                                  |
 | 联网搜索   | 博查AI, SerpAPI, Wikipedia, DuckDuckGo                   |
-| 语音       | Web Speech API (识别 + 合成)                             |
+| 语音 ASR   | FunASR-Nano-2512 (SenseVoice + Qwen3-0.6B)              |
+| 语音 TTS   | Qwen3-TTS-12Hz-1.7B-CustomVoice                         |
 | 桌面端     | Electron 41 (可选)                                       |
 
 ### 快速开始
@@ -163,6 +180,35 @@ npm run electron:build
 5. 可选：开启语音和联网搜索
 6. 保存设置即可开始对话
 
+### 语音服务
+
+ASR 和 TTS 需要独立启动 Python 推理服务：
+
+```bash
+# 终端 1: ASR (端口 8001)
+cd Emoji_aiAurora
+.venv/bin/python models_infer/funasr_server.py
+
+# 终端 2: TTS (端口 8002)
+.venv/bin/python models_infer/qwen3_tts_server.py
+```
+
+在 Settings → Voice Service Settings 中配置：
+
+| 设置项 | 默认值 |
+|--------|--------|
+| ASR Server URL | `http://localhost:8001` |
+| ASR API Key | `sk-funasr-demo` |
+| TTS Server URL | `http://localhost:8002` |
+| TTS API Key | `sk-qwen3tts-demo` |
+| TTS Speaker | `Vivian` |
+| TTS Language | `Chinese` |
+
+然后在 Settings → Voice Settings 中开启 **Enable Text-to-Speech**，回到聊天界面即可看到 🎤（话筒）和 🔊（喇叭）按钮：
+
+- 点击 🎤 激活语音输入 → 长按 "Hold to speak" 录音 → 松开自动 ASR 转文字发送
+- 点击 🔊 激活语音输出 → LLM 回复自动 TTS 朗读（语气与 Avatar 表情一致）
+
 ### 联网搜索配置 (博查AI - 推荐)
 
 1. 访问 https://open.bochaai.com/ 注册账号
@@ -202,6 +248,10 @@ src/
     ├── streamParser.ts        # SSE 流解析
     └── webSearch.ts           # 联网搜索
 
+models_infer/                  # 语音推理服务
+├── funasr_server.py           # ASR (FunASR-Nano, 端口 8001)
+└── qwen3_tts_server.py        # TTS (Qwen3-TTS-1.7B, 端口 8002)
+
 electron/
 ├── main.ts                    # Electron 主进程
 └── preload.ts                 # 上下文桥接
@@ -239,13 +289,20 @@ MIT
 - Each emotion has unique visual expressions (eyes, mouth, eyebrows, cheek color) and dynamic effects
 - Emotion detection chain: JSON parsing → LLM analysis → Keyword fallback
 
-#### 🎤 Voice Interaction (⚠️ Not Supported in Current Version)
+#### 🎤 ASR (Speech-to-Text)
 
-> ⚠️ **Note**: Voice functionality is currently unavailable and under development.
+- **Voice input**: Click the 🎤 microphone button to activate, long-press "Hold to speak" to record
+- **Local ASR inference**: Powered by FunASR (SenseVoice + Qwen3-0.6B), 16kHz PCM real-time decoding
+- **Flow**: Press to record → Release to send → ASR transcription → Text in chat → LLM replies
+- **Configurable**: ASR Server URL and API Key in Settings (default `http://localhost:8001`)
 
-- Voice input: Hold microphone button to speak, auto-convert to text
-- Voice output: AI responses can be auto-spoken
-- Multi-language recognition support
+#### 🔊 TTS (Text-to-Speech)
+
+- **Voice output**: Click the 🔊 speaker button to activate, LLM responses auto-spoken
+- **Local TTS inference**: Powered by Qwen3-TTS-12Hz-1.7B, supports 21 emotional tones
+- **Emotional speech**: TTS tone matches the Avatar's expression (happy, sad, gentle, playful, etc.)
+- **Streaming playback**: Sentence-by-sentence generation and playback
+- **Configurable**: TTS Server URL, API Key, speaker, language in Settings (default `http://localhost:8002`)
 
 #### 🔍 Web Search
 

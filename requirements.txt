@@ -1,0 +1,33 @@
+# ============================================================
+# aiAurora — 语音推理服务依赖
+# 安装: pip install -r requirements.txt
+# ============================================================
+
+# ----- Web 服务 -----
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# ----- 语音活动检测 (VAD) -----
+webrtcvad>=2.0.10
+
+# ----- ASR: FunASR (SenseVoice + Qwen3-0.6B) -----
+# 自动依赖: torch, numpy, soundfile, sentencepiece, modelscope 等
+funasr>=1.3.0
+
+# ----- TTS: Qwen3-TTS-12Hz-1.7B -----
+# 自动依赖: torch, transformers, accelerate, einops, librosa, onnxruntime
+qwen-tts>=0.1.0
+
+# ----- 音频处理 -----
+soundfile>=0.12.0
+numpy>=1.24.0
+
+# ----- PyTorch (根据 CUDA 版本选择) -----
+# CUDA 11.8:  pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+# CUDA 12.1+: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+# CPU only:    pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+# 也可直接用已安装的 torch: pip install torch>=2.0.0 torchaudio>=2.0.0
+
+# ----- setuptools (webrtcvadb 的依赖) -----
+setuptools>=68.0.0

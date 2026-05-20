@@ -53,3 +53,12 @@ coverage/
 
 # Project specific
 prompt.md
+.opencode/
+.venv/
+
+models_infer/__pycache__/
+
+# Generated audio test files
+output_custom_voice.wav
+__pycache__/
+.sisyphus/

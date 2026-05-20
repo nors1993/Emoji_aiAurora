@@ -1,6 +1,17 @@
 import { Settings, Emotion, Message, LLMRequest, KEYWORD_TO_EMOTION } from '../types'
 import { consumeEventSourceStream } from './streamParser'
 
+// Clean text for TTS: remove emojis, parenthetical annotations, trim
+export function cleanTextForTTS(text: string): string {
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+    .replace(/[（(][^)）]*[)）]/g, '')
+    .replace(/[\[［][^\]］]*[\]］]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([，。！？、；：,.!?;:])\s*/g, '$1')
+    .trim()
+}
+
 // Simple emotion detection based on keywords - 使用新的情绪库
 export function detectEmotion(text: string): Emotion {
   const lowerText = text.toLowerCase()
