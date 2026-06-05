@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,7 +21,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 .settings-header {
@@ -29,8 +29,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: var(--color-bg-tertiary);
-  border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .settings-header h2 {
@@ -52,7 +52,7 @@
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--color-text-primary);
 }
 
@@ -100,8 +100,8 @@
 .form-group select {
   width: 100%;
   padding: 10px 14px;
-  background: var(--color-bg-primary);
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
   font-size: 14px;
@@ -129,13 +129,15 @@
 
 .toggle-btn {
   width: 44px;
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-primary);
   border-radius: var(--radius-sm);
   font-size: 16px;
+  color: var(--color-text-secondary);
 }
 
 .toggle-btn:hover {
   background: var(--color-accent);
+  color: white;
 }
 
 /* Radio group */
@@ -154,10 +156,12 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .radio-option:hover {
   background: var(--color-bg-tertiary);
+  border-color: var(--color-divider);
 }
 
 .radio-option input {
@@ -207,18 +211,18 @@
 }
 
 .status-badge.status-checking {
-  background: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
 }
 
 .status-badge.status-connected {
-  background: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
 }
 
 .status-badge.status-disconnected {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
 }
 
 /* Personality grid */
@@ -231,7 +235,7 @@
 .personality-btn {
   padding: 10px 12px;
   background: var(--color-bg-primary);
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  border: 1px solid var(--color-divider);
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   font-size: 13px;
@@ -240,6 +244,7 @@
 
 .personality-btn:hover {
   border-color: var(--color-accent);
+  background: rgba(124, 58, 237, 0.04);
   color: var(--color-text-primary);
 }
 
@@ -269,8 +274,8 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  background: var(--color-bg-tertiary);
-  border-top: 1px solid rgba(124, 58, 237, 0.2);
+  background: var(--color-bg-primary);
+  border-top: 1px solid rgba(124, 58, 237, 0.1);
 }
 
 .cancel-btn,
@@ -284,11 +289,11 @@
 .cancel-btn {
   background: transparent;
   color: var(--color-text-secondary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--color-text-primary);
 }
 

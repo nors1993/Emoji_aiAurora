@@ -15,25 +15,25 @@ const INTENSE_EMOTIONS = ['excited', 'happy', 'love', 'angry', 'proud', 'playful
 // 情绪 -> 颜色映射（确保情绪与颜色一一对应，每个情绪颜色唯一）
 const EMOTION_COLORS: Record<string, string> = {
   happy: '#FFD700',      // 金色
-  excited: '#FF6B6B',    // 红色
-  love: '#FF69B4',       // 粉色
-  sad: '#4169E1',        // 蓝色
-  angry: '#FF4500',      // 橙红色
-  surprised: '#00CED1',  // 青色
-  fearful: '#9370DB',    // 紫色
-  disgusted: '#32CD32', // 绿色
+  excited: '#FF7E7E',    // 柔红
+  love: '#FF85C8',       // 柔粉
+  sad: '#6B8FF0',        // 柔蓝
+  angry: '#FF6B33',      // 柔橙红
+  surprised: '#40D8DB',  // 柔青
+  fearful: '#B08FE5',    // 柔紫
+  disgusted: '#5CD85C',  // 柔绿
   neutral: '#7C3AED',    // 紫罗兰
   thinking: '#87CEEB',   // 天蓝色
-  sleepy: '#6B5B95',     // 深紫色（更暗，让眼睛和嘴巴更明显）
-  confused: '#FFA500',   // 橙色
+  sleepy: '#8B7BA8',     // 柔深紫
+  confused: '#FFB933',   // 柔橙
   embarrassed: '#FFB6C1',// 浅粉色
-  helpless: '#708090',   // 石板灰
-  jealous: '#DC143C',    // 深红色
-  longing: '#8B4789',   // 中紫红色
+  helpless: '#8FA0A8',   // 柔石板灰
+  jealous: '#E84563',    // 柔深红
+  longing: '#A86BA5',   // 柔中紫红
   shy: '#FF85A2',        // 亮粉色
-  playful: '#20B2AA',    // 浅海绿
-  proud: '#DAA520',      // 金麒麟色
-  grateful: '#FF69B4',   // 粉色（与love相同但可接受）
+  playful: '#4DC4BD',    // 柔浅海绿
+  proud: '#E4B840',      // 柔金麒麟色
+  grateful: '#FF85C8',   // 柔粉
 }
 
 // 眼睛配置类型 - 每个情绪独特的眼睛参数
@@ -807,7 +807,7 @@ function AuroraAvatar() {
               metalness={0.2}
               roughness={0.3}
               transparent
-              opacity={0.9}
+              opacity={0.96}
             />
           </mesh>
           
@@ -945,8 +945,8 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
         ) : isSquinted ? (
           // 笑眼 - 弯曲的弧形
           <mesh rotation={[0, 0, 0]}>
-            <torusGeometry args={[0.2, 0.035, 8, 16, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} side={THREE.DoubleSide} />
+            <torusGeometry args={[0.2, 0.045, 8, 16, Math.PI]} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.25} side={THREE.DoubleSide} />
           </mesh>
         ) : isHalfLidded ? (
           // 半闭眼 - 上半部分
@@ -961,7 +961,7 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
           // 正常眼
           <sphereGeometry args={[0.22, 32, 32]} />
         )}
-        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+        <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
       </mesh>
       
       {/* Pupil - hide when closed */}
@@ -994,7 +994,7 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
       {/* Eyebrow for expressions - hide when closed */}
       {!shouldClose && (
         <mesh 
-          position={[side === 'left' ? -0.02 : 0.02, 0.35 + eyebrowConfig.verticalOffset + (1 - eyeScaleY) * 0.5, 0.12]} 
+          position={[side === 'left' ? -0.02 : 0.02, 0.35 + eyebrowConfig.verticalOffset + (1 - eyeScaleY) * 0.5, 0.28]} 
           rotation={[0, 0, eyebrowRotation]}
         >
           <planeGeometry args={[0.28, 0.06]} />
@@ -1006,7 +1006,7 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
       {shouldClose && (
         <mesh position={[0, 0.02, 0.01]} rotation={[0, 0, 0]}>
           <planeGeometry args={[0.35, 0.05]} />
-          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+          <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
         </mesh>
       )}
     </group>
@@ -1023,8 +1023,8 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
       case 'smile':  // 微笑 - 向上弯曲的弧线（嘴角上扬）
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
-            <torusGeometry args={[0.22, 0.045, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <torusGeometry args={[0.22, 0.055, 16, 32, Math.PI]} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1034,7 +1034,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
             {/* ringGeometry 创建开口的圆环 (O型开口) */}
             <mesh position={[0, 0, 0.01]}>
               <ringGeometry args={[0.1, 0.2, 32]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} side={THREE.DoubleSide} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} side={THREE.DoubleSide} />
             </mesh>
           </group>
         )
@@ -1044,11 +1044,11 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh>
               <boxGeometry args={[0.35, 0.08, 0.02]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
             <mesh position={[0, -0.02, 0.01]}>
               <planeGeometry args={[0.3, 0.06]} />
-              <meshStandardMaterial color="#1a1a2e" />
+              <meshStandardMaterial color="#2a2a3e" />
             </mesh>
           </group>
         )
@@ -1056,24 +1056,24 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
       case 'frown':  // 向下弯曲
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
-            <torusGeometry args={[0.15, 0.04, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <torusGeometry args={[0.15, 0.05, 16, 32, Math.PI]} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
       case 'downturned':  // 悲伤 - happy的翻转版本，嘴角下扬
         return (
           <mesh rotation={[0, 0, 0]}>
-            <torusGeometry args={[0.22, 0.045, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <torusGeometry args={[0.22, 0.055, 16, 32, Math.PI]} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
       case 'concerned':  // 担忧 - happy翻转但幅度小一点
         return (
           <mesh rotation={[0, 0, 0]}>
-            <torusGeometry args={[0.2, 0.04, 16, 32, Math.PI * 0.8]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <torusGeometry args={[0.2, 0.05, 16, 32, Math.PI * 0.8]} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1082,11 +1082,11 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh>
               <boxGeometry args={[0.28, 0.1, 0.02]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
             <mesh position={[0, -0.04, 0.01]}>
               <planeGeometry args={[0.24, 0.05]} />
-              <meshStandardMaterial color="#1a1a2e" />
+              <meshStandardMaterial color="#2a2a3e" />
             </mesh>
           </group>
         )
@@ -1096,15 +1096,15 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh>
               <sphereGeometry args={[0.1, 16, 16]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
             <mesh position={[0.08, 0, 0]} scale={[0.8, 0.8, 0.8]}>
               <sphereGeometry args={[0.1, 16, 16]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
             <mesh position={[-0.08, 0, 0]} scale={[0.8, 0.8, 0.8]}>
               <sphereGeometry args={[0.1, 16, 16]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1115,7 +1115,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
             {/* 波浪曲线 - 使用torus实现更平滑的效果 */}
             <mesh position={[0, 0, 0]} rotation={[0, 0, 0]}>
               <torusGeometry args={[0.12, 0.025, 16, 32, Math.PI * 0.7]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1125,7 +1125,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group scale={[1, 0.6, 1]}>
             <mesh>
               <circleGeometry args={[0.12, 32]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1134,7 +1134,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
             <torusGeometry args={[0.15, 0.04, 16, 32, Math.PI * 2]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1142,7 +1142,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh>
             <circleGeometry args={[0.12, 32]} />
-            <meshStandardMaterial color="#1a1a2e" />
+            <meshStandardMaterial color="#2a2a3e" />
           </mesh>
         )
       
@@ -1150,7 +1150,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh>
             <planeGeometry args={[0.24, 0.04]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1159,7 +1159,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh position={[0.02, 0, 0]} rotation={[0, 0, 0.18]}>
               <torusGeometry args={[0.14, 0.04, 16, 32, Math.PI * 0.8]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1168,7 +1168,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh scale={[1.3, 0.9, 1]}>
             <circleGeometry args={[0.12, 32]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1177,7 +1177,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[0, 0, 0]}>
             <torusGeometry args={[0.18, 0.045, 16, 32, Math.PI * 0.7]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1185,7 +1185,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh scale={[0.85, 1.3, 1]}>
             <circleGeometry args={[0.14, 32]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1194,7 +1194,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh position={[0.03, 0, 0]} rotation={[0, 0, -0.1]}>
               <torusGeometry args={[0.1, 0.025, 16, 32, Math.PI * 0.6]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1203,7 +1203,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
             <torusGeometry args={[0.25, 0.035, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1212,7 +1212,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
           <group>
             <mesh position={[0.02, 0, 0]} rotation={[Math.PI, 0, -0.15]}>
               <torusGeometry args={[0.14, 0.035, 16, 32, Math.PI * 0.8]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
             </mesh>
           </group>
         )
@@ -1221,7 +1221,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[0, 0, 0]}>
             <torusGeometry args={[0.15, 0.03, 16, 32, Math.PI * 0.5]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1229,7 +1229,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
             <torusGeometry args={[0.12, 0.03, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1237,7 +1237,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh rotation={[Math.PI, 0, 0]}>
             <torusGeometry args={[0.08, 0.025, 16, 32, Math.PI]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
       
@@ -1245,7 +1245,7 @@ function Mouth({ position, emotion }: { position: [number, number, number]; emot
         return (
           <mesh>
             <planeGeometry args={[0.2, 0.03]} />
-            <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+            <meshStandardMaterial color="#b8aec4" emissive="#b8aec4" emissiveIntensity={0.2} />
           </mesh>
         )
     }
@@ -1443,7 +1443,7 @@ function Particles({ emotion, isIntense }: { emotion: Emotion; isIntense: boolea
         transparent
         opacity={particleOpacity}
         sizeAttenuation
-        blending={THREE.AdditiveBlending}
+        blending={THREE.NormalBlending}
         depthWrite={false}
       />
     </points>
@@ -1486,8 +1486,8 @@ function EmotionLabel({ emotion }: { emotion: Emotion }) {
       style={{ 
         borderColor: color,
         color: color,
-        backgroundColor: `rgba(0,0,0,0.6)`,
-        backdropFilter: 'blur(4px)'
+        backgroundColor: `rgba(255,255,255,0.85)`,
+        backdropFilter: 'blur(8px)'
       }}
     >
       {name}

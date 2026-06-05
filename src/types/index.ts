@@ -352,8 +352,8 @@ export interface Settings {
   volume: number
   language: string  // 回复语言: 'zh-CN', 'en-US', 'ja-JP', etc.
   webSearchEnabled: boolean  // 联网搜索功能开关
-  searchApiKey: string  // 搜索 API Key (支持 SerpAPI, Bing, etc.)
-  searchApiUrl: string  // 搜索 API 端点 (可选，默认使用免费搜索)
+  scraplingUrl: string  // Scrapling 搜索服务器 URL (默认 http://localhost:8003)
+  scraplingApiKey: string  // Scrapling 服务器 API Key (默认 sk-scrapling-demo)
 
   // ASR (语音识别) 配置
   asrEnabled: boolean      // 使用自定义 ASR 服务

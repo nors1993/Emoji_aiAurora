@@ -4,13 +4,31 @@ import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { useChatStore, getSystemPrompt } from '../../stores/chatStore'
 import { sendToLLM, checkOllamaConnection, checkASRHealth, checkTTSHealth, parseEmotionFromResponse, analyzeEmotionWithLLM, cleanTextForTTS } from '../../utils/llm'
-import { webSearch, formatSearchResultsForLLM } from '../../utils/webSearch'
+import { webSearch, formatSearchResultsForLLM, checkScraplingHealth } from '../../utils/webSearch'
 import { AudioCapture } from '../../utils/audioCapture'
 import { TTSClient } from '../../utils/ttsClient'
 import type { TTSChunk } from '../../utils/ttsClient'
 import type { Emotion } from '../../types'
 
 import './Chat.css'
+
+/**
+ * Wrap bare URLs in proper markdown link syntax so ReactMarkdown renders
+ * only the URL as the link — not any trailing CJK text or punctuation.
+ * The character class explicitly excludes CJK characters and CJK/ASCII
+ * sentence-ending punctuation that commonly follows a URL.
+ */
+function urlify(text: string): string {
+  // Match http/https URLs.  The negated char class stops at whitespace, CJK
+  // characters, brackets, quotes, and both CJK + ASCII sentence punctuation.
+  const urlRe = /https?:\/\/[^\s\[\]<>「」『』《》【】""''，。、；：？！（）()]+/g
+
+  return text.replace(urlRe, (raw) => {
+    // Strip trailing punctuation that isn't part of the actual URL
+    const url = raw.replace(/[.,;:!?，。、；：！？]+$/, '')
+    return `[${url}](${url})`
+  })
+}
 
 let recognition: SpeechRecognition | null = null
 let synthesis: SpeechSynthesis | null = null
@@ -192,7 +210,7 @@ export default function Chat() {
 
     if (shouldSearch) {
       try {
-        const searchResponse = await webSearch(messageText, currentSettings.searchApiKey, currentSettings.searchApiUrl)
+        const searchResponse = await webSearch(messageText, currentSettings.scraplingUrl, currentSettings.scraplingApiKey)
         if (searchResponse.results.length > 0) {
           searchResultsContext = formatSearchResultsForLLM(searchResponse)
         } else {
@@ -488,7 +506,7 @@ export default function Chat() {
               {message.role === 'assistant' ? '✨' : '👤'}
             </div>
             <div className="message-content">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{message.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{urlify(message.content)}</ReactMarkdown>
             </div>
           </div>
         ))}
@@ -539,7 +557,22 @@ export default function Chat() {
           {settings.webSearchEnabled && (
             <button
               className={`control-btn ${isWebSearchMode ? 'active' : ''}`}
-              onClick={() => setIsWebSearchMode(!isWebSearchMode)}
+              onClick={async () => {
+                if (isWebSearchMode) {
+                  setIsWebSearchMode(false)
+                  return
+                }
+                const healthy = await checkScraplingHealth(settings.scraplingUrl)
+                if (healthy) {
+                  setIsWebSearchMode(true)
+                } else {
+                  addMessage({
+                    role: 'assistant',
+                    content: '⚠️ Scrapling 搜索服务未启动，请先在终端运行：\n```bash\n.venv/bin/python models_infer/scrapling_server.py\n```\n启动后再点击 🔍 搜索按钮。',
+                    emotion: 'concerned',
+                  })
+                }
+              }}
               title="Toggle web search mode"
             >
               🔍

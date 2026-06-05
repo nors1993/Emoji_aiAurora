@@ -13,7 +13,7 @@
   justify-content: space-between;
   padding: 12px 24px;
   background: var(--color-bg-tertiary);
-  border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+  border-bottom: 1px solid var(--color-border-subtle);
   -webkit-app-region: drag;
 }
 
@@ -72,6 +72,7 @@
 
 .settings-btn:hover {
   background: var(--color-accent);
+  color: white;
   transform: rotate(90deg);
 }
 
@@ -86,7 +87,7 @@
 /* Avatar panel */
 .avatar-panel {
   min-width: 300px;
-  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a1a 100%);
+  background: radial-gradient(ellipse at 50% 40%, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -98,16 +99,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.1) 0%, transparent 50%);
+  background:
+    radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
   pointer-events: none;
 }
 
 /* Split handle */
 .split-handle {
   width: 12px;
-  background: transparent;
+  background: linear-gradient(90deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-secondary) 100%
+  );
   cursor: col-resize;
   display: flex;
   align-items: center;
@@ -117,19 +122,51 @@
   position: relative;
 }
 
+.split-handle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.08) 15%,
+    rgba(124, 58, 237, 0.08) 85%,
+    transparent 100%
+  );
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.split-handle:hover::before,
+.split-handle.dragging::before {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.15) 15%,
+    rgba(124, 58, 237, 0.15) 85%,
+    transparent 100%
+  );
+}
+
 .split-handle:hover,
 .split-handle.dragging {
-  background: rgba(124, 58, 237, 0.15);
+  background: linear-gradient(90deg,
+    #e2e0e8 0%,
+    #f4f3f7 50%,
+    #f8f7fb 100%
+  );
 }
 
 .split-handle-line {
   width: 4px;
   height: 48px;
-  background: linear-gradient(180deg, 
-    transparent 0%, 
-    rgba(124, 58, 237, 0.3) 20%, 
-    rgba(124, 58, 237, 0.5) 50%, 
-    rgba(124, 58, 237, 0.3) 80%, 
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.08) 20%,
+    rgba(124, 58, 237, 0.12) 50%,
+    rgba(124, 58, 237, 0.08) 80%,
     transparent 100%
   );
   border-radius: 2px;
@@ -138,11 +175,11 @@
 
 .split-handle:hover .split-handle-line,
 .split-handle.dragging .split-handle-line {
-  background: linear-gradient(180deg, 
-    transparent 0%, 
-    rgba(124, 58, 237, 0.6) 20%, 
-    rgba(167, 139, 250, 0.8) 50%, 
-    rgba(124, 58, 237, 0.6) 80%, 
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.15) 20%,
+    rgba(167, 139, 250, 0.2) 50%,
+    rgba(124, 58, 237, 0.15) 80%,
     transparent 100%
   );
 }
@@ -153,6 +190,7 @@
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  background: var(--color-bg-secondary);
 }
 
 /* Responsive */

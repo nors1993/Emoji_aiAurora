@@ -196,8 +196,8 @@ export default function Settings({ onClose }: SettingsProps) {
         volume: localSettings.volume ?? 0.8,
         language: localSettings.language || 'zh-CN',
         webSearchEnabled: localSettings.webSearchEnabled || false,
-        searchApiKey: localSettings.searchApiKey || '',
-        searchApiUrl: localSettings.searchApiUrl || '',
+        scraplingUrl: localSettings.scraplingUrl || 'http://localhost:8003',
+        scraplingApiKey: localSettings.scraplingApiKey || 'sk-scrapling-demo',
         asrEnabled: localSettings.asrEnabled || false,
         asrUrl: localSettings.asrUrl || 'http://localhost:8001',
         asrApiKey: localSettings.asrApiKey || 'sk-funasr-demo',
@@ -440,34 +440,34 @@ setSettings(settingsToSave as unknown as Settings)
                 <span>Enable Web Search (联网搜索)</span>
               </label>
               <p className="setting-hint">
-                启用后，当您认为AI回答不正确时，说"不对"、"错了"等关键词会自动触发联网搜索
+                启用后，点击聊天界面搜索图标即可使用 Scrapling 驱动的实时联网搜索
               </p>
             </div>
             
             {localSettings.webSearchEnabled && (
               <>
                 <div className="form-group">
-                  <label>搜索 API Key (推荐博查AI)</label>
+                  <label>Scrapling Server URL</label>
                   <input
-                    type="password"
-                    value={localSettings.searchApiKey}
-                    onChange={e => setLocalSettings({ ...localSettings, searchApiKey: e.target.value })}
-                    placeholder="博查AI / SerpAPI / Bing API Key"
+                    type="text"
+                    value={localSettings.scraplingUrl}
+                    onChange={e => setLocalSettings({ ...localSettings, scraplingUrl: e.target.value })}
+                    placeholder="http://localhost:8003"
                   />
                   <p className="setting-hint">
-                    推荐 <a href="https://open.bochaai.com/" target="_blank" rel="noopener noreferrer">博查AI</a> (国内可用，免费额度)，或使用 SerpAPI/Bing
+                    基于 <a href="https://github.com/nors1993/Emoji_aiAurora" target="_blank" rel="noopener noreferrer">Scrapling</a> 的免费网页搜索，无需外部 API Key。启动命令见下方说明。
                   </p>
                 </div>
                 <div className="form-group">
-                  <label>搜索 API 端点 (可选)</label>
+                  <label>Scrapling API Key</label>
                   <input
-                    type="text"
-                    value={localSettings.searchApiUrl}
-                    onChange={e => setLocalSettings({ ...localSettings, searchApiUrl: e.target.value })}
-                    placeholder="留空自动使用博查AI"
+                    type="password"
+                    value={localSettings.scraplingApiKey}
+                    onChange={e => setLocalSettings({ ...localSettings, scraplingApiKey: e.target.value })}
+                    placeholder="sk-scrapling-demo"
                   />
                   <p className="setting-hint">
-                    填写自定义端点，不填则默认使用博查AI (国内快速)
+                    默认 API Key 为 sk-scrapling-demo，与服务端一致即可
                   </p>
                 </div>
               </>

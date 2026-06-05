@@ -47,9 +47,10 @@
 
 #### 🔍 联网搜索
 
-- 支持多种搜索提供商：博查AI、SerpAPI、Wikipedia、DuckDuckGo
-- 博查AI推荐国内使用，免费额度可用
+- 基于 **Scrapling** 驱动的免费网页搜索，通过 DuckDuckGo 获取实时搜索结果
+- 无需外部 API Key，零成本使用
 - 开启后在对话中点击搜索图标即可使用实时搜索结果
+- 需本地启动 Scrapling 搜索服务器（见下方"搜索服务"章节）
 
 #### 👤 多重人格
 
@@ -91,10 +92,10 @@
 │  └── 情绪检测 (JSON + LLM + 关键词)                          │
 ├─────────────────────────────────────────────────────────────┤
 │                      联网搜索                                 │
-│  utils/webSearch.ts                                         │
-│  ├── 博查AI (POST，国内推荐)                                 │
-│  ├── SerpAPI、Bing、Wikipedia、DuckDuckGo                   │
-│  └── 搜索结果注入 LLM 系统提示                               │
+│  utils/webSearch.ts → models_infer/scrapling_server.py      │
+│  ├── Scrapling FetcherSession (Chrome TLS 指纹)              │
+│  ├── DuckDuckGo HTML 搜索 (免费，无需 API Key)                │
+│  └── 搜索结果注入 LLM 系统提示 (端口 8003)                     │
 ├─────────────────────────────────────────────────────────────┤
 │                      3D 渲染                                  │
 │  Three.js 0.158 + @react-three/fiber + @react-three/drei   │
@@ -127,7 +128,7 @@
 | 状态管理   | Zustand 4                                                |
 | Markdown   | react-markdown 9.x                                       |
 | 大语言模型 | OpenAI 兼容 API, Ollama                                  |
-| 联网搜索   | 博查AI, SerpAPI, Wikipedia, DuckDuckGo                   |
+| 联网搜索   | Scrapling (DuckDuckGo, 免费)                             |
 | 语音 ASR   | FunASR-Nano-2512 (SenseVoice + Qwen3-0.6B)              |
 | 语音 TTS   | Qwen3-TTS-12Hz-1.7B-CustomVoice                         |
 | 测试       | Vitest 4.x, Playwright 1.60, Testing Library             |
@@ -223,13 +224,26 @@ cd Emoji_aiAurora
 - 点击 🎤 激活语音输入 → 长按 "Hold to speak" 录音 → 松开自动 ASR 转文字发送
 - 点击 🔊 激活语音输出 → LLM 回复自动 TTS 朗读（语气与 Avatar 表情一致）
 
-### 联网搜索配置 (博查AI - 推荐)
+### 搜索服务
 
-1. 访问 https://open.bochaai.com/ 注册账号
-2. 创建 API Key
-3. 在设置中开启"联网搜索"
-4. 输入博查AI API Key
-5. 对话时点击搜索图标启用搜索
+联网搜索需要启动 Scrapling 搜索服务器（基于 Scrapling 的免费 DuckDuckGo 搜索）：
+
+```bash
+# 首次使用：安装 Scrapling Python 包
+.venv/bin/pip install "scrapling[all]>=0.4.8"
+
+# 启动搜索服务器 (端口 8003)
+.venv/bin/python models_infer/scrapling_server.py
+```
+
+在 Settings → Web Search Settings 中配置：
+
+| 设置项 | 默认值 |
+|--------|--------|
+| Scrapling Server URL | `http://localhost:8003` |
+| Scrapling API Key | `sk-scrapling-demo` |
+
+然后在聊天界面点击 🔍 搜索图标即可启用实时联网搜索。无需外部 API Key，零成本使用。
 
 ### 🧪 测试
 
@@ -290,11 +304,12 @@ src/
 └── utils/
     ├── llm.ts                 # LLM API 调用
     ├── streamParser.ts        # SSE 流解析
-    └── webSearch.ts           # 联网搜索
+    ├── webSearch.ts           # 联网搜索 (Scrapling)
 
-models_infer/                  # 语音推理服务
+models_infer/                  # 语音推理服务 + 搜索服务
 ├── funasr_server.py           # ASR (FunASR-Nano, 端口 8001)
-└── qwen3_tts_server.py        # TTS (Qwen3-TTS-1.7B, 端口 8002)
+├── qwen3_tts_server.py        # TTS (Qwen3-TTS-1.7B, 端口 8002)
+└── scrapling_server.py        # 搜索 (Scrapling + DuckDuckGo, 端口 8003)
 
 tests/                         # 测试套件
 ├── unit/                      # 单元测试 (Vitest)
@@ -324,10 +339,14 @@ electron/
 
 ### Changelog
 
-#### 2026-06-05 — Testing Infrastructure, Benchmarks & Avatar Polish
+#### 2026-06-05 — Scrapling Web Search, Testing Infra & Avatar Polish
 
 | Category | Changes | File |
 |------|---------|------|
+| 🔵 Search | Replaced multi-provider web search with Scrapling-powered DuckDuckGo scraping | `src/utils/webSearch.ts` |
+| 🔵 Search | Added Scrapling Python search server (port 8003, no API key needed) | `models_infer/scrapling_server.py` |
+| 🔵 Search | Updated Settings UI: Scrapling Server URL + API Key config | `src/components/Settings/Settings.tsx` |
+| 🔵 Search | Removed BochaAI, SerpAPI, Bing, Wikipedia provider dependencies | `src/utils/webSearch.ts` |
 | 🟢 Testing | Added Vitest 4.x unit test framework with jsdom environment | `vitest.config.ts`, `tests/setup.ts` |
 | 🟢 Testing | Unit tests for `llm.ts`, `streamParser.ts`, voice services | `tests/unit/` |
 | 🟢 Testing | Playwright 1.60 E2E tests (chromium, parallel mode) | `playwright.config.ts`, `tests/e2e/` |
@@ -397,9 +416,10 @@ MIT
 
 #### 🔍 Web Search
 
-- Supports multiple providers: Bocha AI, SerpAPI, Wikipedia, DuckDuckGo
-- Bocha AI recommended for China mainland (free tier available)
-- Click search icon in chat to enable real-time search results
+- **Scrapling**-powered free web search via DuckDuckGo for real-time results
+- No external API keys required — zero cost
+- Click the search icon in chat to enable real-time search
+- Requires local Scrapling search server (see Voice & Search Services below)
 
 #### 🧪 Testing
 
@@ -458,7 +478,7 @@ Coverage:
 | State Management | Zustand 4                                              |
 | Markdown         | react-markdown 9.x                                     |
 | LLM              | OpenAI Compatible API, Ollama                          |
-| Web Search       | Bocha AI, SerpAPI, Wikipedia, DuckDuckGo               |
+| Web Search       | Scrapling (DuckDuckGo, free)                           |
 | Voice            | Web Speech API (Recognition + Synthesis)               |
 | Testing          | Vitest 4.x, Playwright 1.60, Testing Library            |
 | Desktop          | Electron 41 (Optional)                                 |
@@ -506,13 +526,24 @@ npx vitest run --coverage
 5. Optional: Enable voice and web search
 6. Save and start chatting
 
-### Web Search Setup (Bocha AI - Recommended)
+### Web Search (Scrapling - Free, No API Key)
 
-1. Visit https://open.bochaai.com/ to register
-2. Create an API Key
-3. Enable "Web Search" in Settings
-4. Enter your Bocha AI API Key
-5. Click the search icon in chat to enable search
+```bash
+# First time: install Scrapling Python package
+.venv/bin/pip install "scrapling[all]>=0.4.8"
+
+# Start search server (port 8003)
+.venv/bin/python models_infer/scrapling_server.py
+```
+
+In Settings → Web Search Settings, configure:
+
+| Setting | Default |
+|---------|---------|
+| Scrapling Server URL | `http://localhost:8003` |
+| Scrapling API Key | `sk-scrapling-demo` |
+
+Then enable web search in Settings and click the 🔍 search icon in chat. Powered by Scrapling + DuckDuckGo — zero cost, no external API keys needed.
 
 ### Demo
 ![alt text](image-2.png)

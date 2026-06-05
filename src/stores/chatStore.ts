@@ -52,8 +52,8 @@ const defaultSettings: Settings = {
   volume: 0.8,
   language: 'zh-CN',  // 默认中文
   webSearchEnabled: false,  // 默认关闭联网搜索
-  searchApiKey: '',  // 搜索 API Key
-  searchApiUrl: '',   // 搜索 API 端点 (可选)
+  scraplingUrl: 'http://localhost:8003',  // Scrapling 搜索服务器
+  scraplingApiKey: 'sk-scrapling-demo',  // Scrapling 服务器 API Key
 
   // ASR 配置
   asrEnabled: false,
