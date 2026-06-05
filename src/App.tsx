@@ -112,7 +112,7 @@ function App() {
       const rect = container.getBoundingClientRect()
       const x = e.clientX - rect.left
       const newRatio = Math.max(0.25, Math.min(0.75, x / rect.width))
-      setSplitRatio(newRatio)
+      requestAnimationFrame(() => setSplitRatio(newRatio))
     }
     
     const handleMouseUp = () => {

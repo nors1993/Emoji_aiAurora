@@ -62,3 +62,4 @@ models_infer/__pycache__/
 output_custom_voice.wav
 __pycache__/
 .sisyphus/
+.codegraph/

@@ -149,9 +149,22 @@ export function parseEmotionFromResponse(text: string, isComplete: boolean = fal
       }
       
       // Try to find JSON in the response (non-greedy for nested braces safety)
-      const jsonMatch = cleanText.match(/\{[^{}]*"emotion"[^{}]*"text"[^{}]*\}/) 
+      const jsonMatch = cleanText.match(/\{[^{}]*"emotion"[^{}]*"text"[^{}]*\}/)
         || cleanText.match(/\{[^{}]*"text"[^{}]*"emotion"[^{}]*\}/)
-        || cleanText.match(/\{[\s\S]*\}/)
+        || (() => {
+          // Find balanced JSON by counting braces
+          const first = cleanText.indexOf('{')
+          if (first < 0) return null
+          let depth = 0
+          for (let i = first; i < cleanText.length; i++) {
+            if (cleanText[i] === '{') depth++
+            else if (cleanText[i] === '}') {
+              depth--
+              if (depth === 0) return cleanText.slice(first, i + 1)
+            }
+          }
+          return null
+        })()
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0])
         
@@ -188,24 +201,22 @@ export async function sendToLLM(
   messages: Message[],
   settings: Settings,
   systemPrompt: string,
+  signal: AbortSignal,
   onChunk: (chunk: string, isDone: boolean) => void,
   onEmotionChange: (emotion: Emotion) => void
 ): Promise<string> {
   const { apiProvider, apiUrl, apiKey, modelName, ollamaUrl } = settings
-  
-  console.log('[LLM] Request:', apiProvider, modelName)
-  
+
   const apiMessages = [
     { role: 'system' as const, content: systemPrompt },
     ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
   ]
-  
+
   if (apiProvider === 'openai') {
-    // 确保 apiUrl 包含 /v1 路径
     const normalizedApiUrl = apiUrl.endsWith('/v1') ? apiUrl : `${apiUrl}/v1`
-    return sendToOpenAI(normalizedApiUrl, apiKey, modelName, apiMessages, onChunk, onEmotionChange)
+    return sendToOpenAI(normalizedApiUrl, apiKey, modelName, apiMessages, signal, onChunk, onEmotionChange)
   } else {
-    return sendToOllama(ollamaUrl, modelName, apiMessages, onChunk, onEmotionChange)
+    return sendToOllama(ollamaUrl, modelName, apiMessages, signal, onChunk, onEmotionChange)
   }
 }
 
@@ -214,6 +225,7 @@ async function sendToOpenAI(
   apiKey: string,
   model: string,
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  signal: AbortSignal,
   onChunk: (chunk: string, isDone: boolean) => void,
   onEmotionChange: (emotion: Emotion) => void
 ): Promise<string> {
@@ -234,10 +246,14 @@ async function sendToOpenAI(
     temperature: 0.8
   }
   
+  const timeoutSignal = AbortSignal.timeout(30000)
+  const combinedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
   const response = await fetch(url, {
     method: 'POST',
     headers,
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: combinedSignal,
   })
   
   if (!response.ok) {
@@ -271,6 +287,7 @@ async function sendToOllama(
   baseUrl: string,
   model: string,
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  signal: AbortSignal,
   onChunk: (chunk: string, isDone: boolean) => void,
   onEmotionChange: (emotion: Emotion) => void
 ): Promise<string> {
@@ -282,12 +299,16 @@ async function sendToOllama(
     stream: true
   }
   
+  const timeoutSignal = AbortSignal.timeout(60000)
+  const combinedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: combinedSignal,
   })
   
   if (!response.ok) {
@@ -347,6 +368,37 @@ export async function checkOllamaConnection(url: string): Promise<boolean> {
     return response.ok
   } catch (e) {
     console.warn('[Ollama] Connection check failed:', e)
+    return false
+  }
+}
+
+export async function checkASRHealth(url: string): Promise<boolean> {
+  try {
+    const base = url
+      .replace(/\/+$/, '')
+      .replace(/^ws:\/\//, 'http://')
+      .replace(/^wss:\/\//, 'https://')
+    await fetch(`${base}/`, {
+      method: 'GET',
+      mode: 'no-cors',
+      signal: AbortSignal.timeout(3000)
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function checkTTSHealth(url: string): Promise<boolean> {
+  try {
+    const base = url.replace(/\/+$/, '')
+    await fetch(`${base}/`, {
+      method: 'GET',
+      mode: 'no-cors',
+      signal: AbortSignal.timeout(3000)
+    })
+    return true
+  } catch {
     return false
   }
 }
@@ -443,7 +495,7 @@ export async function analyzeEmotionWithLLM(
       method: 'POST',
       headers,
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10000)  // 10 秒超时
+      signal: AbortSignal.timeout(60000),
     })
     
     if (!response.ok) {

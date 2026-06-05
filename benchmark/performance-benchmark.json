@@ -1,0 +1,266 @@
+{
+  "title": "Emoji_aiAurora Performance Benchmark",
+  "version": "1.0.0",
+  "description": "Performance thresholds and measurement criteria for all system components",
+
+  "rendering": {
+    "description": "3D avatar rendering performance metrics",
+    "metrics": [
+      {
+        "id": "PERF-001",
+        "name": "Avatar FPS - idle state",
+        "description": "Frames per second when avatar is in neutral/idle state with no interaction",
+        "target_fps": 60,
+        "minimum_fps": 55,
+        "critical_fps": 30,
+        "measurement": "requestAnimationFrame timestamp delta over 5-second window",
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-002",
+        "name": "Avatar FPS - emotion transition",
+        "description": "FPS during emotion transition animation",
+        "target_fps": 55,
+        "minimum_fps": 45,
+        "critical_fps": 24,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-003",
+        "name": "Avatar FPS - shake animation (angry)",
+        "description": "FPS during angry shake animation",
+        "target_fps": 55,
+        "minimum_fps": 45,
+        "critical_fps": 24,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-004",
+        "name": "Avatar FPS - pulse animation (intense emotions)",
+        "description": "FPS during scale pulse animation",
+        "target_fps": 55,
+        "minimum_fps": 45,
+        "critical_fps": 24,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-005",
+        "name": "Emotion transition time",
+        "description": "Time for avatar to fully transition from one emotion to another",
+        "target_ms": 200,
+        "maximum_ms": 300,
+        "critical_ms": 500,
+        "measurement": "Time from setCurrentEmotion call to visual state fully updated",
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "llm_performance": {
+    "description": "LLM integration performance metrics",
+    "metrics": [
+      {
+        "id": "PERF-006",
+        "name": "LLM first token latency - OpenAI",
+        "description": "Time from request to first token received",
+        "target_ms": 500,
+        "maximum_ms": 2000,
+        "critical_ms": 5000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-007",
+        "name": "LLM first token latency - Ollama",
+        "description": "Time from request to first token received (local)",
+        "target_ms": 200,
+        "maximum_ms": 1000,
+        "critical_ms": 3000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-008",
+        "name": "Emotion detection latency",
+        "description": "Time to detect emotion from complete response",
+        "target_ms": 50,
+        "maximum_ms": 100,
+        "critical_ms": 200,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-009",
+        "name": "Text streaming display latency",
+        "description": "Time from token received to display",
+        "target_ms": 16,
+        "maximum_ms": 50,
+        "critical_ms": 100,
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "voice_performance": {
+    "description": "Voice I/O performance metrics",
+    "metrics": [
+      {
+        "id": "PERF-010",
+        "name": "ASR start latency",
+        "description": "Time from click to recording active",
+        "target_ms": 200,
+        "maximum_ms": 500,
+        "critical_ms": 1000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-011",
+        "name": "ASR transcription time",
+        "description": "Time from audio sent to text received",
+        "target_ms": 500,
+        "maximum_ms": 2000,
+        "critical_ms": 5000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-012",
+        "name": "TTS first audio latency",
+        "description": "Time from text sent to first audio chunk",
+        "target_ms": 1000,
+        "maximum_ms": 3000,
+        "critical_ms": 8000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-013",
+        "name": "TTS stream chunk interval",
+        "description": "Time between consecutive audio chunks",
+        "target_ms": 100,
+        "maximum_ms": 200,
+        "critical_ms": 500,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-014",
+        "name": "TTS playback gap (stream mode)",
+        "description": "Gap between sentences during stream playback",
+        "target_ms": 50,
+        "maximum_ms": 100,
+        "critical_ms": 200,
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "memory": {
+    "description": "Memory usage metrics",
+    "metrics": [
+      {
+        "id": "PERF-015",
+        "name": "Initial memory usage",
+        "description": "Memory after app loads, before any interaction",
+        "target_mb": 100,
+        "maximum_mb": 200,
+        "critical_mb": 400,
+        "measurement": "performance.memory or DevTools Memory tab",
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-016",
+        "name": "Memory after 10 chat messages",
+        "description": "Memory growth after sustained usage",
+        "target_mb": 150,
+        "maximum_mb": 300,
+        "critical_mb": 500,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-017",
+        "name": "Memory leak detection - 50 messages",
+        "description": "Check for memory growth without GC",
+        "target_growth_mb": 10,
+        "maximum_growth_mb": 50,
+        "critical_growth_mb": 100,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-018",
+        "name": "Audio buffer cleanup",
+        "description": "Memory released after voice recording stops",
+        "expected": { "buffers_released": true, "no_memory_leak": true },
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "ui_responsiveness": {
+    "description": "UI responsiveness metrics",
+    "metrics": [
+      {
+        "id": "PERF-019",
+        "name": "Time to First Contentful Paint (FCP)",
+        "target_ms": 1000,
+        "maximum_ms": 2000,
+        "critical_ms": 4000,
+        "measurement": "PerformanceObserver or Lighthouse",
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-020",
+        "name": "Time to Interactive (TTI)",
+        "target_ms": 2000,
+        "maximum_ms": 4000,
+        "critical_ms": 8000,
+        "priority": "P1"
+      },
+      {
+        "id": "PERF-021",
+        "name": "Input response time",
+        "description": "Time from keypress to character displayed",
+        "target_ms": 50,
+        "maximum_ms": 100,
+        "critical_ms": 200,
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-022",
+        "name": "Chat scroll performance",
+        "description": "FPS during rapid scrolling of chat history",
+        "target_fps": 30,
+        "minimum_fps": 20,
+        "critical_fps": 10,
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "bundle_size": {
+    "description": "JavaScript bundle size metrics",
+    "metrics": [
+      {
+        "id": "PERF-023",
+        "name": "Initial JS bundle size",
+        "target_kb": 500,
+        "maximum_kb": 1000,
+        "critical_kb": 2000,
+        "measurement": "vite build analysis",
+        "priority": "P2"
+      },
+      {
+        "id": "PERF-024",
+        "name": "Code splitting effectiveness",
+        "description": "Vendor chunks should be separate from app code",
+        "expected": {
+          "vendor_chunk_exists": true,
+          "react_three_fiber_separate": true
+        },
+        "priority": "P3"
+      }
+    ]
+  },
+
+  "measurement_tools": {
+    "description": "Recommended tools and methods for each metric type",
+    "fps": ["Chrome DevTools Performance tab", "requestAnimationFrame timestamp delta", "playwright-performance"],
+    "memory": ["Chrome DevTools Memory tab", "performance.memory API", "playwright-memory"],
+    "network": ["Chrome DevTools Network tab", "WebPageTest", "Lighthouse"],
+    "bundle": ["vite-bundle-analyzer", "webpack-bundle-analyzer", "source-map-explorer"]
+  }
+}

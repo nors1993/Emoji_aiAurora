@@ -1,0 +1,228 @@
+{
+  "title": "Emoji_aiAurora LLM Integration Benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark for LLM streaming, emotion detection, and text processing",
+
+  "openai_streaming": {
+    "description": "Tests for OpenAI-compatible SSE streaming",
+    "source_file": "src/utils/streamParser.ts",
+    "tests": [
+      {
+        "id": "LLM-001",
+        "name": "SSE single chunk parsing",
+        "input": "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n",
+        "expected": { "chunks": ["Hello"], "complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-002",
+        "name": "SSE multiple chunks in sequence",
+        "input": "data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\" there\"}}]}\n\n",
+        "expected": { "chunks": ["Hi", " there"], "complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-003",
+        "name": "SSE [DONE] termination signal",
+        "input": "data: {\"choices\":[{\"delta\":{\"content\":\"Bye\"}}]}\ndata: [DONE]\n\n",
+        "expected": { "chunks": ["Bye"], "complete": true, "terminated_by_done": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-004",
+        "name": "SSE malformed JSON line handling",
+        "input": "data: {invalid json}\ndata: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\n",
+        "expected": { "chunks": ["OK"], "complete": true, "errors_ignored": true },
+        "priority": "P1"
+      },
+      {
+        "id": "LLM-005",
+        "name": "SSE partial chunk buffering",
+        "input": "data: {\"cho",
+        "continuation": "lces\":[{\"delta\":{\"content\":\"Hi\"}}]}\n\n",
+        "expected": { "chunks": ["Hi"], "complete": true },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "ollama_streaming": {
+    "description": "Tests for Ollama NDJSON streaming",
+    "source_file": "src/utils/llm.ts",
+    "tests": [
+      {
+        "id": "LLM-006",
+        "name": "NDJSON single message parsing",
+        "input": "{\"message\":{\"content\":\"Hello\"}}\n",
+        "expected": { "chunks": ["Hello"], "complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-007",
+        "name": "NDJSON multiple messages",
+        "input": "{\"message\":{\"content\":\"Hi\"}}\n{\"message\":{\"content\":\" there\"}}\n",
+        "expected": { "chunks": ["Hi", " there"], "complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-008",
+        "name": "NDJSON done signal",
+        "input": "{\"message\":{\"content\":\"Bye\"}}\n{\"done\":true}\n",
+        "expected": { "chunks": ["Bye"], "complete": true, "done_signal_received": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-009",
+        "name": "NDJSON context inclusion",
+        "input": "{\"message\":{\"content\":\"Response with context\"}}\n",
+        "expected": { "context_preserved": true },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "emotion_detection": {
+    "description": "Tests for emotion detection chain",
+    "source_file": "src/utils/llm.ts",
+    "tests": [
+      {
+        "id": "LLM-010",
+        "name": "Emotion detection - keyword match",
+        "input": "今天太开心了！",
+        "expected": { "emotion": "happy", "detection_method": "keyword" },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-011",
+        "name": "Emotion detection - exclamation count",
+        "input": "太棒了！！！",
+        "expected": { "emotion": "excited", "detection_method": "punctuation" },
+        "priority": "P1"
+      },
+      {
+        "id": "LLM-012",
+        "name": "Emotion detection - ellipsis",
+        "input": "让我想想...",
+        "expected": { "emotion": "thinking", "detection_method": "punctuation" },
+        "priority": "P1"
+      },
+      {
+        "id": "LLM-013",
+        "name": "Emotion detection - question count",
+        "input": "为什么？？？",
+        "expected": { "emotion": "confused", "detection_method": "punctuation" },
+        "priority": "P2"
+      },
+      {
+        "id": "LLM-014",
+        "name": "Emotion detection - fallback to neutral",
+        "input": "好的",
+        "expected": { "emotion": "neutral", "detection_method": "fallback" },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-015",
+        "name": "Emotion detection - case insensitive",
+        "input": "I'M SO HAPPY!",
+        "expected": { "emotion": "happy", "detection_method": "keyword" },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "text_processing": {
+    "description": "Tests for text utilities",
+    "source_file": "src/utils/llm.ts",
+    "tests": [
+      {
+        "id": "LLM-016",
+        "name": "cleanTextForTTS - remove emojis",
+        "input": "今天天气真好😊",
+        "expected": { "output": "今天天气真好", "emojis_removed": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-017",
+        "name": "cleanTextForTTS - remove parenthetical",
+        "input": "这个很好（我觉得）",
+        "expected": { "output": "这个很好", "parenthetical_removed": true },
+        "priority": "P1"
+      },
+      {
+        "id": "LLM-018",
+        "name": "cleanTextForTTS - normalize spaces",
+        "input": "今天   天气    好",
+        "expected": { "output": "今天 天气 好", "spaces_normalized": true },
+        "priority": "P1"
+      },
+      {
+        "id": "LLM-019",
+        "name": "cleanTextForTTS - preserve Chinese punctuation",
+        "input": "你好，开心！",
+        "expected": { "output": "你好，开心！", "punctuation_preserved": true },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "api_integration": {
+    "description": "Tests for API integration and error handling",
+    "tests": [
+      {
+        "id": "LLM-020",
+        "name": "OpenAI API - valid response handling",
+        "provider": "openai",
+        "expected": { "stream_chunks_received": true, "final_text_complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-021",
+        "name": "Ollama API - valid response handling",
+        "provider": "ollama",
+        "expected": { "stream_chunks_received": true, "final_text_complete": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-022",
+        "name": "API - network error handling",
+        "scenario": "connection_timeout",
+        "expected": { "error_caught": true, "user_feedback": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-023",
+        "name": "API - invalid API key",
+        "scenario": "auth_failure",
+        "expected": { "error_message_shown": true, "no_stream_started": true },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-024",
+        "name": "API - rate limit handling",
+        "scenario": "rate_limit_exceeded",
+        "expected": { "retry_after_handling": true, "user_notification": true },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "security": {
+    "description": "Security tests for API key handling",
+    "tests": [
+      {
+        "id": "LLM-025",
+        "name": "API key not logged in console",
+        "action": "send message with API key configured",
+        "expected": { "api_key_in_logs": false },
+        "priority": "P0"
+      },
+      {
+        "id": "LLM-026",
+        "name": "API key not in network requests body",
+        "action": "inspect network tab during API call",
+        "expected": { "api_key_obfuscated": true, "auth_header_only": true },
+        "priority": "P0"
+      }
+    ]
+  }
+}

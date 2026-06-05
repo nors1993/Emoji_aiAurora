@@ -12,23 +12,18 @@ export async function* consumeEventSourceStream(
       const { done, value } = await reader.read()
       
       if (done) {
-        // Yield any remaining buffer content
         if (buffer.trim()) {
           const lines = buffer.split('\n')
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const data = line.slice(6)
-              if (data === '[DONE]') {
-                return
-              }
+              if (data === '[DONE]') return
               try {
                 const parsed = JSON.parse(data)
                 const content = parsed.choices?.[0]?.delta?.content || ''
-                if (content) {
-                  yield content
-                }
+                if (content) yield content
               } catch {
-                // Skip malformed SSE data lines
+                console.warn('[streamParser] Malformed SSE data on done')
               }
             }
           }
@@ -38,26 +33,19 @@ export async function* consumeEventSourceStream(
       
       buffer += decoder.decode(value, { stream: true })
       
-      // Process complete lines
       const lines = buffer.split('\n')
-      buffer = lines.pop() || '' // Keep incomplete line in buffer
+      buffer = lines.pop() || ''
       
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           const data = line.slice(6)
-          
-          if (data === '[DONE]') {
-            return
-          }
-          
+          if (data === '[DONE]') return
           try {
             const parsed = JSON.parse(data)
             const content = parsed.choices?.[0]?.delta?.content || ''
-            if (content) {
-              yield content
-            }
+            if (content) yield content
           } catch {
-            // Skip malformed JSON lines in buffer
+            console.warn('[streamParser] Malformed JSON line skipped')
           }
         }
       }

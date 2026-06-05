@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Float } from '@react-three/drei'
-import { Suspense, useRef, useEffect, useState } from 'react'
+import { Suspense, useRef, useEffect, useState, useMemo } from 'react'
 import * as THREE from 'three'
 import { useChatStore } from '../../stores/chatStore'
 import { Emotion, EMOTION_LIST } from '../../types'
@@ -45,6 +45,9 @@ interface EyeConfig {
   hasSparkle: boolean                // 是否有高光 sparkle
   isWink: boolean                    // 是否眨眼（用于 playful）
   eyeShape: 'normal' | 'squinted' | 'droopy' | 'narrowed' | 'halfLidded' | 'wide' | 'asymmetric'  // 眼睛形状变体
+  pupilDilation: number              // 瞳孔扩张程度 (0.7=收缩, 1.0=正常, 1.3=扩张)
+  hasTear: boolean                   // 是否有泪光
+  hasEyeShadow: boolean              // 是否有眼影
 }
 
 // 眼睛配置映射 - 20 种情绪各有独特的眼睛
@@ -55,9 +58,12 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     pupilScale: 1.0,
     pupilOffset: [0, 0],
     isClosed: false,
-    hasSparkle: false,
+    hasSparkle: true,
     isWink: false,
-    eyeShape: 'squinted'
+    eyeShape: 'squinted',
+    pupilDilation: 1.1,
+    hasTear: false,
+    hasEyeShadow: false
   },
   // 兴奋 - 睁大 + 高光
   excited: {
@@ -67,7 +73,10 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: true,
     isWink: false,
-    eyeShape: 'wide'
+    eyeShape: 'wide',
+    pupilDilation: 1.2,
+    hasTear: false,
+    hasEyeShadow: false
   },
   // 爱 - 半闭眼 + 高光
   love: {
@@ -77,9 +86,12 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: true,
     isWink: false,
-    eyeShape: 'halfLidded'
+    eyeShape: 'halfLidded',
+    pupilDilation: 1.05,
+    hasTear: false,
+    hasEyeShadow: true
   },
-  // 悲伤 - 下垂 + 瞳孔变小
+  // 悲伤 - 下垂 + 瞳孔变小 + 泪光
   sad: {
     eyeScale: [1.0, 0.95],
     pupilScale: 0.85,
@@ -87,7 +99,101 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'droopy'
+    eyeShape: 'droopy',
+    pupilDilation: 0.8,
+    hasTear: true,
+    hasEyeShadow: false
+  },
+  // 愤怒 - 斜眼眯眼 + 眼影
+  angry: {
+    eyeScale: [1.0, 0.9],
+    pupilScale: 1.0,
+    pupilOffset: [0.03, 0],
+    isClosed: false,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'narrowed',
+    pupilDilation: 0.9,
+    hasTear: false,
+    hasEyeShadow: true
+  },
+  // 惊讶 - 瞪大眼
+  surprised: {
+    eyeScale: [1.4, 1.4],
+    pupilScale: 1.3,
+    pupilOffset: [0, 0],
+    isClosed: false,
+    hasSparkle: true,
+    isWink: false,
+    eyeShape: 'wide',
+    pupilDilation: 1.3,
+    hasTear: false,
+    hasEyeShadow: false
+  },
+  // 恐惧 - 瞪大 + 瞳孔扩张
+  fearful: {
+    eyeScale: [1.35, 1.35],
+    pupilScale: 1.25,
+    pupilOffset: [0, 0],
+    isClosed: false,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'wide',
+    pupilDilation: 1.3,
+    hasTear: true,
+    hasEyeShadow: false
+  },
+  // 厌恶 - 眯眼 + 不对称
+  disgusted: {
+    eyeScale: [1.0, 0.85],
+    pupilScale: 0.9,
+    pupilOffset: [-0.02, 0],
+    isClosed: false,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'asymmetric',
+    pupilDilation: 0.85,
+    hasTear: false,
+    hasEyeShadow: false
+  },
+  // 中性 - 正常
+  neutral: {
+    eyeScale: [1.0, 1.0],
+    pupilScale: 1.0,
+    pupilOffset: [0, 0],
+    isClosed: false,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'normal',
+    pupilDilation: 1.0,
+    hasTear: false,
+    hasEyeShadow: false
+  },
+  // 思考 - 略眯眼
+  thinking: {
+    eyeScale: [1.0, 0.95],
+    pupilScale: 1.0,
+    pupilOffset: [0, 0.05],
+    isClosed: false,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'halfLidded',
+    pupilDilation: 0.95,
+    hasTear: false,
+    hasEyeShadow: false
+  },
+// 困倦 - 几乎闭上
+  sleepy: {
+    eyeScale: [1.0, 0.15],
+    pupilScale: 1.0,
+    pupilOffset: [0, 0],
+    isClosed: true,
+    hasSparkle: false,
+    isWink: false,
+    eyeShape: 'droopy',
+    pupilDilation: 0.7,
+    hasTear: false,
+    hasEyeShadow: false
   },
   // 担忧 - 轻微眯眼 + 略微下垂
   concerned: {
@@ -97,79 +203,12 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'normal'
+    eyeShape: 'normal',
+    pupilDilation: 0.9,
+    hasTear: false,
+    hasEyeShadow: false
   },
-  // 愤怒 - 眯起 + 尖锐
-  angry: {
-    eyeScale: [1.0, 0.7],
-    pupilScale: 1.0,
-    pupilOffset: [0, 0],
-    isClosed: false,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'narrowed'
-  },
-  // 惊讶 - 非常睁大 + 大瞳孔
-  surprised: {
-    eyeScale: [1.4, 1.4],
-    pupilScale: 1.3,
-    pupilOffset: [0, 0],
-    isClosed: false,
-    hasSparkle: true,
-    isWink: false,
-    eyeShape: 'wide'
-  },
-  // 恐惧 - 睁大 + 小瞳孔
-  fearful: {
-    eyeScale: [1.2, 1.2],
-    pupilScale: 0.7,
-    pupilOffset: [0, 0],
-    isClosed: false,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'wide'
-  },
-  // 厌恶 - 不对称眯眼
-  disgusted: {
-    eyeScale: [0.95, 0.85],
-    pupilScale: 1.0,
-    pupilOffset: [0, 0],
-    isClosed: false,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'asymmetric'
-  },
-  // 中性 - 正常放松
-  neutral: {
-    eyeScale: [1.0, 1.0],
-    pupilScale: 1.0,
-    pupilOffset: [0, 0],
-    isClosed: false,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'normal'
-  },
-  // 思考 - 向上看 + 一只眼略窄
-  thinking: {
-    eyeScale: [1.0, 0.95],
-    pupilScale: 1.0,
-    pupilOffset: [0, 0.05],
-    isClosed: false,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'normal'
-  },
-  // 困倦 - 几乎闭上
-  sleepy: {
-    eyeScale: [1.0, 0.15],
-    pupilScale: 1.0,
-    pupilOffset: [0, 0],
-    isClosed: true,
-    hasSparkle: false,
-    isWink: false,
-    eyeShape: 'droopy'
-  },
-  // 困惑 - 不对称大小
+  // 困惑 - 不对称眯眼
   confused: {
     eyeScale: [1.1, 1.0],
     pupilScale: 1.0,
@@ -177,17 +216,23 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'asymmetric'
+    eyeShape: 'asymmetric',
+    pupilDilation: 0.95,
+    hasTear: false,
+    hasEyeShadow: false
   },
-  // 窘迫 - 目光躲避 + 半闭
+  // 窘迫 - 目光躲避 + 眼影
   embarrassed: {
     eyeScale: [1.0, 0.85],
-    pupilScale: 1.0,
+    pupilScale: 0.9,
     pupilOffset: [-0.04, 0],
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'halfLidded'
+    eyeShape: 'halfLidded',
+    pupilDilation: 0.85,
+    hasTear: false,
+    hasEyeShadow: true
   },
   // 无助 - 柔和下垂
   helpless: {
@@ -197,9 +242,12 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'droopy'
+    eyeShape: 'droopy',
+    pupilDilation: 0.85,
+    hasTear: true,
+    hasEyeShadow: false
   },
-  // 嫉妒 - 斜眼 + 眯眼
+  // 嫉妒 - 斜眼眯眼
   jealous: {
     eyeScale: [0.9, 0.8],
     pupilScale: 1.0,
@@ -207,7 +255,10 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'narrowed'
+    eyeShape: 'narrowed',
+    pupilDilation: 0.9,
+    hasTear: false,
+    hasEyeShadow: true
   },
   // 怅然若失 - 轻微下垂 + 远望
   longing: {
@@ -217,7 +268,10 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'droopy'
+    eyeShape: 'droopy',
+    pupilDilation: 0.85,
+    hasTear: true,
+    hasEyeShadow: false
   },
   // 害羞 - 目光躲避 + 半闭
   shy: {
@@ -227,29 +281,38 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: false,
     isWink: false,
-    eyeShape: 'halfLidded'
+    eyeShape: 'halfLidded',
+    pupilDilation: 0.9,
+    hasTear: false,
+    hasEyeShadow: true
   },
-  // 调皮 - 眨眼 (左眼闭，右眼开)
+  // 调皮 - 眨眼 + 高光
   playful: {
     eyeScale: [1.0, 1.0],
     pupilScale: 1.2,
     pupilOffset: [0, 0],
     isClosed: false,
     hasSparkle: true,
-    isWink: true,  // 特殊标记，左眼眨眼
-    eyeShape: 'normal'
+    isWink: true,
+    eyeShape: 'normal',
+    pupilDilation: 1.1,
+    hasTear: false,
+    hasEyeShadow: false
   },
-  // 自豪 - 轻微闭眼
+  // 自豪 - 轻微闭眼 + 高光
   proud: {
     eyeScale: [1.0, 0.85],
     pupilScale: 1.0,
     pupilOffset: [0, 0],
     isClosed: false,
-    hasSparkle: false,
+    hasSparkle: true,
     isWink: false,
-    eyeShape: 'squinted'
+    eyeShape: 'squinted',
+    pupilDilation: 1.1,
+    hasTear: false,
+    hasEyeShadow: false
   },
-  // 感激 - 柔和温暖
+  // 感激 - 柔和温暖 + 高光
   grateful: {
     eyeScale: [1.0, 0.9],
     pupilScale: 1.0,
@@ -257,7 +320,10 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
     isClosed: false,
     hasSparkle: true,
     isWink: false,
-    eyeShape: 'halfLidded'
+    eyeShape: 'halfLidded',
+    pupilDilation: 1.05,
+    hasTear: false,
+    hasEyeShadow: true
   }
 }
 
@@ -292,8 +358,8 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
   },
   // 悲伤 - 内角抬起
   sad: {
-    rotation: 0.2,
-    verticalOffset: 0,
+    rotation: 0.15,
+    verticalOffset: 0.08,
     isAsymmetric: false
   },
   // 担忧 - 轻微皱起（担忧的眉毛）
@@ -302,10 +368,10 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     verticalOffset: 0.02,
     isAsymmetric: false
   },
-  // 愤怒 - V 形下沉
+  // 愤怒 - V 形下沉（但不要沉太深）
   angry: {
-    rotation: 0.4,
-    verticalOffset: -0.05,
+    rotation: 0.3,
+    verticalOffset: 0.05,
     isAsymmetric: false
   },
   // 惊讶 - 高抬
@@ -320,12 +386,12 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     verticalOffset: 0.08,
     isAsymmetric: false
   },
-  // 厌恶 - 不对称皱眉（更明显的差异）
+  // 厌恶 - 皱眉但要抬起
   disgusted: {
-    rotation: 0.15,
-    verticalOffset: 0,
+    rotation: 0.1,
+    verticalOffset: 0.05,
     isAsymmetric: true,
-    leftRotation: 0.35,
+    leftRotation: 0.2,
     rightRotation: 0.05
   },
   // 中性 - 平板
@@ -342,78 +408,78 @@ const EYEBROW_CONFIGS: Record<Emotion, EyebrowConfig> = {
     leftRotation: -0.3,
     rightRotation: 0.05
   },
-  // 困倦 - 下垂
+  // 困倦 - 下垂（但不要太多）
   sleepy: {
-    rotation: 0.1,
-    verticalOffset: -0.05,
+    rotation: 0.05,
+    verticalOffset: 0.05,
     isAsymmetric: false
   },
-  // 困惑 - 不对称（更明显）
+  // 困惑 - 不对称
   confused: {
     rotation: 0,
-    verticalOffset: 0,
+    verticalOffset: 0.05,
     isAsymmetric: true,
-    leftRotation: -0.35,
+    leftRotation: -0.25,
     rightRotation: 0.1
   },
-  // 窘迫 - 不对称（轻微不对称，表现尴尬）
+  // 窘迫 - 不对称
   embarrassed: {
-    rotation: -0.1,
-    verticalOffset: 0,
-    isAsymmetric: true,
-    leftRotation: -0.05,
-    rightRotation: -0.15
-  },
-  // 无助 - 不对称（表现无奈）
-  helpless: {
     rotation: -0.05,
-    verticalOffset: 0.03,
+    verticalOffset: 0.05,
+    isAsymmetric: true,
+    leftRotation: 0,
+    rightRotation: -0.1
+  },
+  // 无助 - 不对称
+  helpless: {
+    rotation: 0,
+    verticalOffset: 0.05,
     isAsymmetric: true,
     leftRotation: 0.05,
     rightRotation: -0.1
   },
-  // 嫉妒 - 不对称（更明显的差异）
+  // 嫉妒 - 不对称
   jealous: {
     rotation: 0,
-    verticalOffset: 0,
+    verticalOffset: 0.05,
     isAsymmetric: true,
-    leftRotation: 0.25,
+    leftRotation: 0.2,
+    rightRotation: -0.1
+  },
+  // 怅然若失 - 不对称
+  longing: {
+    rotation: -0.05,
+    verticalOffset: 0.05,
+    isAsymmetric: true,
+    leftRotation: 0,
     rightRotation: -0.15
   },
-  // 怅然若失 - 不对称（表现幽怨）
-  longing: {
-    rotation: -0.1,
-    verticalOffset: 0,
-    isAsymmetric: true,
-    leftRotation: -0.05,
-    rightRotation: -0.2
-  },
-  // 害羞 - 不对称（目光躲避）
+  // 害羞 - 不对称
   shy: {
-    rotation: -0.08,
-    verticalOffset: 0,
+    rotation: -0.05,
+    verticalOffset: 0.05,
     isAsymmetric: true,
-    leftRotation: -0.15,
+    leftRotation: -0.1,
     rightRotation: 0
   },
   // 调皮 - 不对称
   playful: {
     rotation: 0,
-    verticalOffset: 0,
+    verticalOffset: 0.05,
     isAsymmetric: true,
-    leftRotation: -0.35,
+    leftRotation: -0.25,
     rightRotation: 0.1
   },
   // 自豪 - 略抬
   proud: {
-    rotation: -0.15,
-    verticalOffset: 0.04,
+    rotation: -0.1,
+    verticalOffset: 0.08,
     isAsymmetric: false
   },
   // 感激 - 柔和拱形
   grateful: {
-    rotation: -0.12,
-    verticalOffset: 0,
+    rotation: -0.08,
+    verticalOffset: 0.05,
     isAsymmetric: false
   }
 }
@@ -451,13 +517,13 @@ const MOUTH_CONFIGS: Record<Emotion, MouthShape> = {
   love: 'smile',         // 甜蜜微笑（比 happy 略小弧度，由渲染控制）
   sad: 'downturned',    // 悲伤 - 嘴角下弯
   concerned: 'concerned', // 担忧 - 轻微下弯
-  angry: 'snarl',        // 愤怒用 snarl
+  angry: 'pout',
   surprised: 'open',
   fearful: 'openSmall',
   disgusted: 'disgust',
   neutral: 'neutral',
   thinking: 'hmm',
-  sleepy: 'yawn',
+  sleepy: 'neutral',
   confused: 'wavy',
   embarrassed: 'shySmile',
   helpless: 'sigh',
@@ -794,27 +860,40 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
   const eyebrowConfig = EYEBROW_CONFIGS[emotion]
   const [isBlinking, setIsBlinking] = useState(false)
   
-  // 自动眨眼动画（对于sleepy等低唤醒情绪更频繁）
+  // 自动眨眼动画 - 使用 BLINK_CONFIGS
   useEffect(() => {
-    // 困倦、悲伤、平静等情绪眨眼更频繁
-    const blinkEmotions = ['sleepy', 'sad', 'neutral', 'thinking', 'helpless', 'longing']
-    const isFrequentBlink = blinkEmotions.includes(emotion)
+    const blinkConfig = BLINK_CONFIGS[emotion]
+    const { duration, interval, type } = blinkConfig
     
-    const blinkInterval = isFrequentBlink ? 2500 : 4000 // 困倦时2.5秒，其他4秒
+    const innerTimeoutRef = { current: 0 }
+    let doubleTimeoutRef: number | null = null
+    
+    const doBlink = (blinkDuration: number) => {
+      setIsBlinking(true)
+      innerTimeoutRef.current = window.setTimeout(() => setIsBlinking(false), blinkDuration)
+    }
+    
+    const startBlink = () => {
+      doBlink(duration)
+      
+      if (type === 'double') {
+        doubleTimeoutRef = window.setTimeout(() => {
+          doBlink(duration)
+        }, duration + 100)
+      }
+    }
     
     const timeout = setTimeout(() => {
-      setIsBlinking(true)
-      setTimeout(() => setIsBlinking(false), 150) // 眨眼持续150ms
-    }, Math.random() * 1000 + 500) // 随机延迟0.5-1.5秒后开始
+      startBlink()
+    }, Math.random() * 1000 + 500)
     
-    const interval = setInterval(() => {
-      setIsBlinking(true)
-      setTimeout(() => setIsBlinking(false), 150)
-    }, blinkInterval)
+    const intervalId = setInterval(startBlink, interval)
     
     return () => {
       clearTimeout(timeout)
-      clearInterval(interval)
+      clearTimeout(innerTimeoutRef.current)
+      if (doubleTimeoutRef) clearTimeout(doubleTimeoutRef)
+      clearInterval(intervalId)
     }
   }, [emotion])
   
@@ -915,10 +994,10 @@ function Eye({ position, emotion, side, lookOffset = { x: 0, y: 0 } }: { positio
       {/* Eyebrow for expressions - hide when closed */}
       {!shouldClose && (
         <mesh 
-          position={[side === 'left' ? -0.02 : 0.02, 0.32 + eyebrowConfig.verticalOffset, 0.12]} 
+          position={[side === 'left' ? -0.02 : 0.02, 0.35 + eyebrowConfig.verticalOffset + (1 - eyeScaleY) * 0.5, 0.12]} 
           rotation={[0, 0, eyebrowRotation]}
         >
-          <planeGeometry args={[0.28, 0.055]} />
+          <planeGeometry args={[0.28, 0.06]} />
           <meshStandardMaterial color="#0a0a15" />
         </mesh>
       )}
@@ -1222,68 +1301,204 @@ function Cheek({ position, emotion }: { position: [number, number, number]; emot
   )
 }
 
-// Particles component
+// 炫彩星空粒子配置 - 每个情绪独特的星空颜色系统
+const PARTICLE_COLORS: Record<string, { primary: string; secondary: string; accent: string; glow: string }> = {
+  happy: { primary: '#FFD700', secondary: '#FFA500', accent: '#FFE4B5', glow: '#FFF8DC' },
+  excited: { primary: '#FF6B6B', secondary: '#FF1493', accent: '#FFB6C1', glow: '#FF69B4' },
+  love: { primary: '#FF69B4', secondary: '#FF1493', accent: '#FFC0CB', glow: '#FFB6C1' },
+  sad: { primary: '#4169E1', secondary: '#6495ED', accent: '#87CEEB', glow: '#B0C4DE' },
+  concerned: { primary: '#87CEEB', secondary: '#6495ED', accent: '#B0C4DE', glow: '#E0FFFF' },
+  angry: { primary: '#FF4500', secondary: '#DC143C', accent: '#FF6347', glow: '#FF6347' },
+  surprised: { primary: '#00CED1', secondary: '#40E0D0', accent: '#7FFFD4', glow: '#00FFFF' },
+  fearful: { primary: '#9370DB', secondary: '#8A2BE2', accent: '#DDA0DD', glow: '#DDA0DD' },
+  disgusted: { primary: '#32CD32', secondary: '#98FB98', accent: '#90EE90', glow: '#00FF00' },
+  neutral: { primary: '#7C3AED', secondary: '#9370DB', accent: '#D8BFD8', glow: '#D8BFD8' },
+  thinking: { primary: '#87CEEB', secondary: '#B0E0E6', accent: '#ADD8E6', glow: '#E0FFFF' },
+  sleepy: { primary: '#6B5B95', secondary: '#8B7B95', accent: '#A9A9A9', glow: '#D3D3D3' },
+  confused: { primary: '#FFA500', secondary: '#FFD700', accent: '#FFE4B5', glow: '#FFE4B5' },
+  embarrassed: { primary: '#FFB6C1', secondary: '#FFC0CB', accent: '#FFE4E1', glow: '#FFD1DC' },
+  helpless: { primary: '#708090', secondary: '#778899', accent: '#B0C4DE', glow: '#C0C0C0' },
+  jealous: { primary: '#DC143C', secondary: '#B22222', accent: '#FA8072', glow: '#FF4500' },
+  longing: { primary: '#8B4789', secondary: '#9370DB', accent: '#DDA0DD', glow: '#EE82EE' },
+  shy: { primary: '#FF85A2', secondary: '#FF69B4', accent: '#FFB6C1', glow: '#FF69B4' },
+  playful: { primary: '#20B2AA', secondary: '#48D1CC', accent: '#AFEEEE', glow: '#40E0D0' },
+  proud: { primary: '#DAA520', secondary: '#FFD700', accent: '#F0E68C', glow: '#FFD700' },
+  grateful: { primary: '#FF69B4', secondary: '#FFB6C1', accent: '#FFC0CB', glow: '#FFB6C1' },
+}
+
+// 眨眼配置类型
+interface BlinkConfig {
+  duration: number      // 眨眼持续时间 (ms)
+  interval: number      // 眨眼间隔 (ms)
+  type: 'normal' | 'slow' | 'double' | 'half'  // 眨眼类型
+}
+
+// 眨眼配置映射
+const BLINK_CONFIGS: Record<Emotion, BlinkConfig> = {
+  happy: { duration: 150, interval: 4000, type: 'normal' },
+  excited: { duration: 100, interval: 2500, type: 'normal' },
+  love: { duration: 200, interval: 3500, type: 'slow' },
+  sad: { duration: 180, interval: 4500, type: 'normal' },
+  angry: { duration: 80, interval: 5000, type: 'normal' },
+  surprised: { duration: 120, interval: 3000, type: 'normal' },
+  fearful: { duration: 100, interval: 2500, type: 'double' },
+  disgusted: { duration: 150, interval: 4000, type: 'normal' },
+  neutral: { duration: 150, interval: 4000, type: 'normal' },
+  thinking: { duration: 200, interval: 4500, type: 'slow' },
+  sleepy: { duration: 400, interval: 2500, type: 'slow' },
+  concerned: { duration: 150, interval: 3500, type: 'normal' },
+  confused: { duration: 150, interval: 4000, type: 'double' },
+  embarrassed: { duration: 100, interval: 2000, type: 'normal' },
+  helpless: { duration: 200, interval: 4500, type: 'slow' },
+  jealous: { duration: 100, interval: 4000, type: 'normal' },
+  longing: { duration: 200, interval: 4500, type: 'slow' },
+  shy: { duration: 80, interval: 2500, type: 'half' },
+  playful: { duration: 150, interval: 3000, type: 'double' },
+  proud: { duration: 150, interval: 4000, type: 'normal' },
+  grateful: { duration: 200, interval: 3500, type: 'slow' },
+}
+
+// 星空 Particles component
 function Particles({ emotion, isIntense }: { emotion: Emotion; isIntense: boolean }) {
   const particlesRef = useRef<THREE.Points>(null)
+  const geometryRef = useRef<THREE.BufferGeometry>(null)
   
-  const count = 50
-  const positions = new Float32Array(count * 3)
+  const colors = PARTICLE_COLORS[emotion] || PARTICLE_COLORS.neutral
+  const count = isIntense ? 100 : 60
   
-  for (let i = 0; i < count; i++) {
-    const theta = Math.random() * Math.PI * 2
-    const phi = Math.acos(2 * Math.random() - 1)
-    const r = 2 + Math.random() * 0.5
-    
-    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
-    positions[i * 3 + 2] = r * Math.cos(phi)
-  }
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      const r = 2 + Math.random() * 0.5
+      arr[i * 3] = r * Math.sin(phi) * Math.cos(theta)
+      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+      arr[i * 3 + 2] = r * Math.cos(phi)
+    }
+    return arr
+  }, [count])
+  
+  const colorsArray = useMemo(() => {
+    const arr = new Float32Array(count * 3)
+    const { primary, secondary, accent } = colors
+    for (let i = 0; i < count; i++) {
+      const colorChoice = Math.random()
+      let color: THREE.Color
+      
+      if (colorChoice < 0.4) {
+        color = new THREE.Color(primary)
+      } else if (colorChoice < 0.7) {
+        color = new THREE.Color(secondary)
+      } else {
+        color = new THREE.Color(accent)
+      }
+      
+      arr[i * 3] = color.r
+      arr[i * 3 + 1] = color.g
+      arr[i * 3 + 2] = color.b
+    }
+    return arr
+  }, [count, colors.primary, colors.secondary, colors.accent])
   
   useEffect(() => {
-    if (!particlesRef.current) return
+    if (!particlesRef.current || !geometryRef.current) return
     
-    // Faster rotation for intense emotions
     const speed = isIntense ? 0.008 : 0.002
+    let animationId: number
+    
     const animate = () => {
       if (!particlesRef.current) return
       particlesRef.current.rotation.y += speed
       particlesRef.current.rotation.x += speed * 0.5
+      animationId = requestAnimationFrame(animate)
     }
     
-    const interval = setInterval(animate, 16)
-    return () => clearInterval(interval)
+    animationId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animationId)
   }, [isIntense])
   
-  // Color based on emotion
-  const color = EMOTION_COLORS[emotion] || '#7C3AED'
-  
-  // More particles and larger size for intense emotions
-  const particleSize = isIntense ? 0.08 : 0.05
-  const particleOpacity = isIntense ? 0.9 : 0.6
+  const particleSize = isIntense ? 0.12 : 0.08
+  const particleOpacity = isIntense ? 1.0 : 0.8
   
   return (
-    <points ref={particlesRef}>
-      <bufferGeometry>
+    <points ref={particlesRef} key={emotion}>
+      <bufferGeometry ref={geometryRef}>
         <bufferAttribute
           attach="attributes-position"
           count={count}
           array={positions}
           itemSize={3}
         />
+        <bufferAttribute
+          attach="attributes-color"
+          count={count}
+          array={colorsArray}
+          itemSize={3}
+        />
       </bufferGeometry>
       <pointsMaterial
         size={particleSize}
-        color={color}
+        vertexColors={true}
         transparent
         opacity={particleOpacity}
         sizeAttenuation
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
       />
     </points>
   )
 }
 
+// 情绪名称映射
+const EMOTION_NAMES: Record<Emotion, string> = {
+  happy: '开心',
+  excited: '兴奋',
+  love: '喜爱',
+  sad: '悲伤',
+  concerned: '担忧',
+  angry: '愤怒',
+  surprised: '惊讶',
+  fearful: '恐惧',
+  disgusted: '厌恶',
+  neutral: '平静',
+  thinking: '思考',
+  sleepy: '困倦',
+  confused: '困惑',
+  embarrassed: '窘迫',
+  helpless: '无奈',
+  jealous: '吃醋',
+  longing: '怅然若失',
+  shy: '害羞',
+  playful: '调皮',
+  proud: '自豪',
+  grateful: '感激',
+}
+
+// Emotion Label component
+function EmotionLabel({ emotion }: { emotion: Emotion }) {
+  const name = EMOTION_NAMES[emotion] || emotion
+  const color = EMOTION_COLORS[emotion] || '#7C3AED'
+  
+  return (
+    <div 
+      className="emotion-label"
+      style={{ 
+        borderColor: color,
+        color: color,
+        backgroundColor: `rgba(0,0,0,0.6)`,
+        backdropFilter: 'blur(4px)'
+      }}
+    >
+      {name}
+    </div>
+  )
+}
+
 // Main Avatar Canvas component
 export default function AvatarCanvas() {
+  const storeDisplayEmotion = useChatStore((state) => state.displayEmotion) || 'neutral'
+  
   return (
     <div className="avatar-canvas">
       <Canvas
@@ -1323,6 +1538,7 @@ export default function AvatarCanvas() {
           />
         </Suspense>
       </Canvas>
+      <EmotionLabel emotion={storeDisplayEmotion} />
     </div>
   )
 }

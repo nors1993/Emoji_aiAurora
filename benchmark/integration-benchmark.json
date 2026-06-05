@@ -1,0 +1,332 @@
+{
+  "title": "Emoji_aiAurora Integration Benchmark",
+  "version": "1.0.0",
+  "description": "End-to-end integration tests covering cross-component flows, settings persistence, Electron IPC, and error handling",
+
+  "avatar_chat_orchestration": {
+    "description": "Core flow: user message → LLM → emotion detection → avatar update",
+    "tests": [
+      {
+        "id": "INT-001",
+        "name": "Full chat flow: user sends message, avatar updates emotion",
+        "steps": [
+          "User types message in Chat component",
+          "Message added to chatStore.messages",
+          "sendToLLM called with messages, settings, systemPrompt",
+          "LLM streams response via onChunk callback",
+          "isLoading set to true during streaming",
+          "On stream complete, parseEmotionFromResponse called",
+          "onEmotionChange called with detected emotion",
+          "chatStore.setCurrentEmotion called",
+          "AvatarCanvas re-renders with new emotion",
+          "isLoading set to false"
+        ],
+        "expected": {
+          "avatar_emotion_matches_detected": true,
+          "message_displayed_in_chat": true,
+          "loading_state_managed": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-002",
+        "name": "Emotion stays 'thinking' during streaming",
+        "expected": {
+          "during_streaming": "thinking",
+          "after_complete": "detected_emotion"
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-003",
+        "name": "Web search results injected into LLM context",
+        "expected": {
+          "search_results_injected": true,
+          "llm_response_includes_search_data": true
+        },
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "settings_persistence": {
+    "description": "Tests for localStorage + Zustand dual sync",
+    "source_files": ["src/stores/chatStore.ts", "src/components/Settings/Settings.tsx"],
+    "tests": [
+      {
+        "id": "INT-004",
+        "name": "Settings read from localStorage on initial render",
+        "description": "Critical: Settings must read from localStorage during render, NOT from Zustand",
+        "scenario": "Fresh page load with existing localStorage settings",
+        "expected": {
+          "settings_loaded_from_localStorage": true,
+          "not_from_zustand_default": true,
+          "ui_reflects_stored_settings": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-005",
+        "name": "Settings changes persist to localStorage",
+        "scenario": "User changes API key in Settings",
+        "expected": {
+          "localStorage_updated": true,
+          "persists_after_refresh": true,
+          "zustand_also_updated": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-006",
+        "name": "Zustand and localStorage stay in sync",
+        "scenario": "Multiple components reading/writing settings",
+        "expected": {
+          "localStorage_matches_zustand": true,
+          "no_stale_values": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-007",
+        "name": "Split panel ratio persists across sessions",
+        "storage_key": "aiAurora_splitRatio",
+        "expected": {
+          "ratio_saved_after_drag": true,
+          "ratio_restored_on_load": true,
+          "valid_range_0_to_1": true
+        },
+        "priority": "P2"
+      },
+      {
+        "id": "INT-008",
+        "name": "API key stored securely",
+        "description": "API key should not be logged or exposed",
+        "scenario": "User configures API key",
+        "expected": {
+          "key_in_localStorage": true,
+          "key_not_in_console": true,
+          "key_not_in_url": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-009",
+        "name": "Personality prompt selection persists",
+        "storage_key": "aiAurora_personality",
+        "expected": {
+          "selected_personality_saved": true,
+          "system_prompt_reflects_selection": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-010",
+        "name": "No stale defaults from Zustand",
+        "description": "Zustand initializes asynchronously, must not use its default values during render",
+        "scenario": "User has settings in localStorage, component renders before Zustand hydrates",
+        "expected": {
+          "ui_shows_localStorage_values": true,
+          "not_zustand_defaults": true
+        },
+        "priority": "P0"
+      }
+    ]
+  },
+
+  "electron_integration": {
+    "description": "Desktop-specific integration tests",
+    "source_files": ["electron/main.ts", "electron/preload.ts", "src/components/Chat/Chat.tsx"],
+    "platform": "electron",
+    "tests": [
+      {
+        "id": "INT-011",
+        "name": "Voice toggle IPC works in Electron",
+        "channel": "toggle-voice",
+        "expected": {
+          "ipc_send_works": true,
+          "ipc_receive_works": true,
+          "voice_mode_toggles": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-012",
+        "name": "Window controls functional",
+        "expected": {
+          "minimize": true,
+          "maximize_restore": true,
+          "close": true
+        },
+        "priority": "P2"
+      },
+      {
+        "id": "INT-013",
+        "name": "App icon displays correctly",
+        "expected": {
+          "icon_file_exists": true,
+          "icon_displayed_in_taskbar": true
+        },
+        "priority": "P3"
+      },
+      {
+        "id": "INT-014",
+        "name": "Dev server URL properly loaded in Electron",
+        "url": "http://localhost:5173",
+        "expected": {
+          "page_loads": true,
+          "assets_load": true,
+          "no_cors_errors": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-015",
+        "name": "Electron mock polyfill in browser mode",
+        "description": "window.electron exists in browser dev mode",
+        "expected": {
+          "electron_object_exists": true,
+          "no_runtime_errors": true
+        },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "error_handling": {
+    "description": "Error handling across all components",
+    "tests": [
+      {
+        "id": "INT-016",
+        "name": "Network error: user-friendly message",
+        "scenario": "LLM API unreachable",
+        "expected": {
+          "error_message_displayed": true,
+          "no_raw_error_shown": true,
+          "retry_option_available": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-017",
+        "name": "Empty catch blocks must not swallow errors",
+        "description": "All catch blocks must log or handle errors properly",
+        "source_files": ["src/utils/*.ts"],
+        "expected": {
+          "no_empty_catch_blocks": true,
+          "errors_logged_or_handled": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-018",
+        "name": "API key validation before request",
+        "scenario": "Empty or invalid API key",
+        "expected": {
+          "validation_error_shown": true,
+          "no_request_sent": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "INT-019",
+        "name": "LLM response timeout handling",
+        "scenario": "LLM takes too long to respond",
+        "timeout_ms": 30000,
+        "expected": {
+          "timeout_detected": true,
+          "error_message_shown": true,
+          "user_can_retry": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-020",
+        "name": "Malformed LLM response handling",
+        "scenario": "LLM returns unexpected format",
+        "expected": {
+          "parser_error_caught": true,
+          "fallback_to_neutral": true,
+          "no_crash": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-021",
+        "name": "Voice permission denied handling",
+        "scenario": "User denies microphone permission",
+        "expected": {
+          "permission_error_shown": true,
+          "fallback_to_text_input": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-022",
+        "name": "TTS server unavailable handling",
+        "scenario": "TTS endpoint returns error",
+        "expected": {
+          "error_caught": true,
+          "text_fallback": true,
+          "user_notification": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-023",
+        "name": "Web search failure graceful degradation",
+        "scenario": "All search providers fail",
+        "expected": {
+          "error_logged": true,
+          "llm_continues_without_search": true
+        },
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "web_search_integration": {
+    "description": "Web search multi-provider chain",
+    "source_file": "src/utils/webSearch.ts",
+    "tests": [
+      {
+        "id": "INT-024",
+        "name": "Search query properly formatted",
+        "input": "What is the weather today?",
+        "expected": {
+          "query_extracted": true,
+          "search_initiated": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-025",
+        "name": "Results formatted for LLM context",
+        "expected": {
+          "formatSearchResultsForLLM_called": true,
+          "results_injectable": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "INT-026",
+        "name": "Search toggle persists across sessions",
+        "expected": {
+          "toggle_state_saved": true,
+          "toggle_state_restored": true
+        },
+        "priority": "P2"
+      },
+      {
+        "id": "INT-027",
+        "name": "Search results don't break message display",
+        "scenario": "Very long search results",
+        "expected": {
+          "no_overflow": true,
+          "scroll_works": true,
+          "markdown_rendered": true
+        },
+        "priority": "P2"
+      }
+    ]
+  }
+}

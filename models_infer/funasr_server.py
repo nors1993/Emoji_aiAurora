@@ -21,6 +21,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import asyncio
 import os
 import tempfile
 import webrtcvad
@@ -111,7 +112,8 @@ async def transcriptions(
         tmp_path = tmp.name
 
     try:
-        res = model.generate(
+        res = await asyncio.to_thread(
+            model.generate,
             input=[tmp_path],
             cache={},
             batch_size=1,
@@ -144,7 +146,7 @@ async def asr_stream(websocket: WebSocket):
     speech_cnt = 0
     speaking = False
 
-    def process_speech(audio_bytes: bytes) -> str | None:
+    async def process_speech(audio_bytes: bytes) -> str | None:
         if not audio_bytes.strip(b"\x00"):
             return None
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
@@ -156,7 +158,8 @@ async def asr_stream(websocket: WebSocket):
             tmp_path = tmp.name
 
         try:
-            res = model.generate(
+            res = await asyncio.to_thread(
+                model.generate,
                 input=[tmp_path],
                 cache={},
                 batch_size=1,
@@ -198,7 +201,7 @@ async def asr_stream(websocket: WebSocket):
                         if silence_cnt >= SILENCE_THRESHOLD:
                             # End of speech segment
                             speaking = False
-                            text = process_speech(bytes(speech_buf))
+                            text = await process_speech(bytes(speech_buf))
                             if text and text.strip():
                                 await websocket.send_json({
                                     "type": "final",
@@ -210,7 +213,7 @@ async def asr_stream(websocket: WebSocket):
     except WebSocketDisconnect:
         # Process any remaining speech
         if speaking and len(speech_buf) > VAD_FRAME_BYTES * 2:
-            text = process_speech(bytes(speech_buf))
+            text = await process_speech(bytes(speech_buf))
             if text and text.strip():
                 import asyncio
                 try:
@@ -241,7 +244,8 @@ async def list_models(authorization: str | None = Header(None)):
 
 
 @app.get("/health")
-async def health():
+async def health(authorization: str | None = Header(None)):
+    verify_auth(authorization)
     return {"status": "ok", "model_loaded": model is not None}
 
 

@@ -21,6 +21,7 @@ Environment variables:
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import io
 import json
@@ -30,7 +31,7 @@ from contextlib import asynccontextmanager
 
 import torch
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 
@@ -215,7 +216,9 @@ def _streaming_speech(text: str, voice: str, language: str, instruct: str, fmt: 
 
     async def event_stream():
         for idx, sentence in enumerate(sentences):
-            b64, sr = generate_audio_chunk(sentence, voice, language, instruct)
+            b64, sr = await asyncio.to_thread(
+                generate_audio_chunk, sentence, voice, language, instruct
+            )
             payload = (
                 f'data: {{"index":{idx},"text":{json.dumps(sentence)},'
                 f'"sample_rate":{sr},"audio":"{b64}"}}\n\n'
@@ -257,7 +260,8 @@ async def list_models(request: Request):
 
 
 @app.get("/health")
-async def health():
+async def health(authorization: str | None = Header(None)):
+    verify_auth(authorization)
     return {"status": "ok", "model_loaded": model is not None}
 
 

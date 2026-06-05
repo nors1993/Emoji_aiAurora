@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeSanitize from 'rehype-sanitize'
 import { useChatStore, getSystemPrompt } from '../../stores/chatStore'
-import { sendToLLM, checkOllamaConnection, parseEmotionFromResponse, analyzeEmotionWithLLM, analyzeEmotionFromContext, cleanTextForTTS } from '../../utils/llm'
+import { sendToLLM, checkOllamaConnection, checkASRHealth, checkTTSHealth, parseEmotionFromResponse, analyzeEmotionWithLLM, cleanTextForTTS } from '../../utils/llm'
 import { webSearch, formatSearchResultsForLLM } from '../../utils/webSearch'
 import { AudioCapture } from '../../utils/audioCapture'
 import { TTSClient } from '../../utils/ttsClient'
@@ -16,10 +18,11 @@ let synthesis: SpeechSynthesis | null = null
 if (typeof window !== 'undefined') {
   const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
   if (SpeechRecognitionCtor) {
-    recognition = new SpeechRecognitionCtor()
-    recognition.continuous = false
-    recognition.interimResults = true
-    recognition.lang = 'en-US'
+    const rec = new SpeechRecognitionCtor()
+    rec.continuous = false
+    rec.interimResults = true
+    rec.lang = 'en-US'
+    recognition = rec
   }
   synthesis = window.speechSynthesis
 }
@@ -34,6 +37,7 @@ export default function Chat() {
     setSpeaking,
     currentEmotion,
     setCurrentEmotion,
+    setDisplayEmotion,
     settings,
     personality,
     clearMessages,
@@ -51,16 +55,10 @@ export default function Chat() {
 
   const audioCaptureRef = useRef<AudioCapture | null>(null)
   const ttsClientRef = useRef<TTSClient | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const pcmBufferRef = useRef<Int16Array[]>([])
   const speechTranscriptRef = useRef('')
-
-  useEffect(() => {
-    console.log('=== CHAT SETTINGS UPDATE ===')
-    console.log('settings in Chat:', JSON.stringify(settings))
-    console.log('modelName in Chat:', settings.modelName)
-    console.log('apiProvider in Chat:', settings.apiProvider)
-  }, [settings])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -106,28 +104,51 @@ export default function Chat() {
   }, [])
 
   // TTS: speak response
-  const speak = useCallback((text: string, emotion?: Emotion) => {
+  const speak = useCallback(async (text: string, emotion?: Emotion) => {
     const currentSettings = useChatStore.getState().settings
 
     const useCustomTTS = currentSettings.ttsEnabled && currentSettings.ttsUrl
+
+    // Stop any existing TTS client before starting a new one
+    if (ttsClientRef.current) {
+      ttsClientRef.current.stop()
+      ttsClientRef.current = null
+      audioCtxRef.current?.close().catch(() => {})
+      audioCtxRef.current = null
+      setSpeaking(false)
+    }
+
     if (useCustomTTS) {
-      setSpeaking(true)
-      const tts = new TTSClient(currentSettings)
-      ttsClientRef.current = tts
-      let playChain: Promise<void> = Promise.resolve()
-      tts.onChunk = (chunk: TTSChunk) => {
-        playChain = playChain.then(() => playAudioBlob(chunk.audio))
+      const ttsHealthy = await checkTTSHealth(currentSettings.ttsUrl)
+      if (!ttsHealthy) {
+        addMessage({
+          role: 'assistant',
+          content: `⚠️ TTS 语音合成服务未就绪，已回退到浏览器语音。请先启动 TTS 服务（默认端口 8002，当前: \`${currentSettings.ttsUrl}\`）。`,
+          emotion: 'concerned'
+        })
+      } else {
+        setSpeaking(true)
+        const tts = new TTSClient(currentSettings)
+        ttsClientRef.current = tts
+
+        let chainDone = Promise.resolve()
+
+        tts.onChunk = (chunk: TTSChunk) => {
+          chainDone = chainDone.then(() => playAudioBlob(chunk.audio))
+        }
+        tts.onDone = () => {
+          chainDone.then(() => {
+            ttsClientRef.current = null
+            setSpeaking(false)
+          })
+        }
+        tts.onError = () => {
+          ttsClientRef.current = null
+          setSpeaking(false)
+        }
+        tts.speak(text, emotion)
+        return
       }
-      tts.onDone = () => {
-        ttsClientRef.current = null
-        setSpeaking(false)
-      }
-      tts.onError = () => {
-        ttsClientRef.current = null
-        setSpeaking(false)
-      }
-      tts.speak(text, emotion)
-      return
     }
 
     // fallback: browser SpeechSynthesis
@@ -184,7 +205,10 @@ export default function Chat() {
       }
     }
 
-    setLoading(true)
+    abortControllerRef.current?.abort()
+      abortControllerRef.current = new AbortController()
+
+      setLoading(true)
     setCurrentEmotion('thinking')
 
     try {
@@ -200,6 +224,7 @@ export default function Chat() {
         currentMessages,
         currentSettings,
         systemPrompt,
+        abortControllerRef.current.signal,
         (chunk, isDone) => {
           if (!isDone) fullResponse += chunk
         },
@@ -207,28 +232,22 @@ export default function Chat() {
       )
 
       const parsed = parseEmotionFromResponse(fullResponse, true)
-      const displayText = parsed.content
+      let displayText = parsed.content
 
       let finalEmotion = parsed.emotion
-      if (parsed.content === fullResponse) {
+      
+      const emotionGameMatch = fullResponse.match(/\{\s*"emotion"\s*:\s*"(\w+)"\s*,\s*"action"\s*:\s*"(?:speak|show)"\s*\}/i)
+      if (emotionGameMatch) {
+        const gameEmotion = emotionGameMatch[1] as Emotion
+        finalEmotion = gameEmotion
+        setDisplayEmotion(gameEmotion)
+        setCurrentEmotion(gameEmotion)
+        displayText = displayText.replace(emotionGameMatch[0], '').trim()
+        console.log('[EmotionGame] Set emotion to:', gameEmotion)
+      } else if (displayText === fullResponse) {
         finalEmotion = await analyzeEmotionWithLLM(displayText, currentSettings)
       }
-
-      // Override emotion based on user context
-      const contextEmotion = analyzeEmotionFromContext(messageText, displayText, currentPersonality)
-      const USER_TO_AVATAR: Partial<Record<Emotion, Emotion>> = {
-        sad: 'concerned',      // 用户悲伤 → 关切安慰
-        angry: 'concerned',    // 用户生气 → 安抚
-        grateful: 'grateful',   // 用户感谢 → 感激
-        love: 'love',           // 用户示爱 → 喜爱
-        excited: 'excited',     // 用户兴奋 → 同步兴奋
-        playful: 'playful',     // 用户调皮 → 同步调皮
-      }
-      const mapped = USER_TO_AVATAR[contextEmotion]
-      if (mapped) {
-        finalEmotion = mapped
-      }
-
+      
       setCurrentEmotion(finalEmotion)
       addMessage({ role: 'assistant', content: displayText, emotion: finalEmotion })
 
@@ -291,9 +310,60 @@ export default function Chat() {
     return new Blob([buf], { type: 'audio/wav' })
   }
 
+  const checkVoiceServiceHealth = useCallback(async (): Promise<boolean> => {
+    const s = useChatStore.getState().settings
+    const asrNeeded = s.asrEnabled && s.asrUrl
+    const ttsNeeded = s.ttsEnabled && s.ttsUrl
+
+    const checks: Promise<'asr' | 'tts' | null>[] = []
+    if (asrNeeded) {
+      checks.push(checkASRHealth(s.asrUrl).then(ok => ok ? null : 'asr' as const))
+    }
+    if (ttsNeeded) {
+      checks.push(checkTTSHealth(s.ttsUrl).then(ok => ok ? null : 'tts' as const))
+    }
+    if (checks.length === 0) return true
+
+    const failed = (await Promise.all(checks)).filter((v): v is 'asr' | 'tts' => v !== null)
+    if (failed.length === 0) return true
+
+    const services = failed
+      .map(k => k === 'asr'
+        ? `ASR 语音识别服务（默认端口 8001，当前: \`${s.asrUrl}\`）`
+        : `TTS 语音合成服务（默认端口 8002，当前: \`${s.ttsUrl}\`）`)
+      .join(' 和 ')
+
+    addMessage({
+      role: 'assistant',
+      content: `⚠️ ${services}未就绪，请先启动后再使用语音功能。`,
+      emotion: 'concerned'
+    })
+    return false
+  }, [addMessage])
+
+  const handleToggleMic = useCallback(async () => {
+    if (!isMicActive) {
+      if (!(await checkVoiceServiceHealth())) return
+    }
+    setIsMicActive((v) => !v)
+  }, [isMicActive, checkVoiceServiceHealth])
+
+  const handleToggleSpeaker = useCallback(async () => {
+    if (!isSpeakerActive) {
+      if (!(await checkVoiceServiceHealth())) return
+    }
+    setIsSpeakerActive((v) => !v)
+  }, [isSpeakerActive, checkVoiceServiceHealth])
+
   // ASR: start listening — buffer PCM or transcript, do NOT process yet
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     if (!isMicActive) return
+
+    if (!(await checkVoiceServiceHealth())) {
+      setIsMicActive(false)
+      return
+    }
+
     setIsListening(true)
     setCurrentEmotion('thinking')
 
@@ -328,7 +398,7 @@ export default function Chat() {
     recognition.onerror = () => setIsListening(false)
     recognition.lang = inputLang
     recognition.start()
-  }, [inputLang, settings.asrEnabled, settings.asrUrl, settings.asrApiKey, isMicActive])
+  }, [inputLang, settings.asrEnabled, settings.asrUrl, settings.asrApiKey, isMicActive, checkVoiceServiceHealth])
 
   // ASR: stop listening — now process buffered audio/transcript
   const stopListening = useCallback(() => {
@@ -418,7 +488,7 @@ export default function Chat() {
               {message.role === 'assistant' ? '✨' : '👤'}
             </div>
             <div className="message-content">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{message.content}</ReactMarkdown>
             </div>
           </div>
         ))}
@@ -445,14 +515,14 @@ export default function Chat() {
             <>
               <button
                 className={`control-btn ${isMicActive ? 'active' : ''}`}
-                onClick={() => setIsMicActive((v) => !v)}
+                onClick={handleToggleMic}
                 title={isMicActive ? 'Disable microphone' : 'Enable microphone'}
               >
                 🎤
               </button>
               <button
                 className={`control-btn ${isSpeakerActive ? 'active' : ''}`}
-                onClick={() => setIsSpeakerActive((v) => !v)}
+                onClick={handleToggleSpeaker}
                 title={isSpeakerActive ? 'Disable speaker' : 'Enable speaker'}
               >
                 🔊

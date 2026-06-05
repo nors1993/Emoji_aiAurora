@@ -27,8 +27,12 @@ const defaultSettings = {
 
 let settings = { ...defaultSettings }
 
-function getSetting(key: string) {
-  return settings[key as keyof typeof defaultSettings]
+function getSetting(key: string): unknown {
+  if (!ALLOWED_SETTING_KEYS.has(key)) {
+    log.warn(`[Settings] Unknown key requested: ${key}`)
+    return undefined
+  }
+  return (settings as Record<string, unknown>)[key]
 }
 
 function setSetting(key: string, value: unknown) {
@@ -103,7 +107,10 @@ function registerShortcuts() {
 
 const ALLOWED_SETTING_KEYS = new Set([
   'windowBounds', 'apiProvider', 'apiUrl', 'apiKey', 'modelName',
-  'ollamaUrl', 'avatarEmotion', 'voiceEnabled', 'volume'
+  'ollamaUrl', 'avatarEmotion', 'voiceEnabled', 'volume',
+  'asrEnabled', 'asrUrl', 'asrApiKey',
+  'ttsEnabled', 'ttsUrl', 'ttsApiKey', 'ttsSpeaker', 'ttsLanguage',
+  'language', 'webSearchEnabled', 'searchApiKey', 'searchApiUrl',
 ])
 
 // IPC Handlers for settings

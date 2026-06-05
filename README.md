@@ -1,6 +1,6 @@
 # aiAurora ✨
 
-*最后更新: 2026-05-21*
+*最后更新: 2026-06-05*
 
 [English](#english) | [中文](#中文)
 
@@ -102,8 +102,8 @@
 │  ├── 眼睛组件 (21种独特配置)                                 │
 │  ├── 嘴巴组件 (19种独特形状)                                 │
 │  ├── 眉毛组件 (旋转 + 不对称)                                │
-│  ├── 腮红组件 (颜色 + 透明度)                                │
-│  └── 粒子系统 (50个浮动粒子)                                 │
+│  ├── 腮红组件 (颜色 + 透明度 + 脉动)                           │
+│  └── 粒子系统 (60-100个四色星空粒子)                            │
 ├─────────────────────────────────────────────────────────────┤
 │                      语音推理服务                              │
 │  models_infer/                                              │
@@ -123,13 +123,14 @@
 | ---------- | -------------------------------------------------------- |
 | 构建工具    | Vite 5                                                   |
 | 前端框架   | React 18, TypeScript 5                                   |
-| 3D渲染     | Three.js 0.158, @react-three/fiber, @react-three/drei   |
+| 3D渲染     | Three.js 0.158, @react-three/fiber, @react-three/drei (星空粒子系统) |
 | 状态管理   | Zustand 4                                                |
 | Markdown   | react-markdown 9.x                                       |
 | 大语言模型 | OpenAI 兼容 API, Ollama                                  |
 | 联网搜索   | 博查AI, SerpAPI, Wikipedia, DuckDuckGo                   |
 | 语音 ASR   | FunASR-Nano-2512 (SenseVoice + Qwen3-0.6B)              |
 | 语音 TTS   | Qwen3-TTS-12Hz-1.7B-CustomVoice                         |
+| 测试       | Vitest 4.x, Playwright 1.60, Testing Library             |
 | 桌面端     | Electron 41 (可选)                                       |
 
 ### 快速开始
@@ -167,6 +168,19 @@ npm run build
 # Electron 桌面应用构建
 npm run electron:build
 # 输出目录: release/
+```
+
+#### 测试
+
+```bash
+# 单元测试
+npx vitest run
+
+# E2E 测试
+npx playwright test
+
+# 覆盖率
+npx vitest run --coverage
 ```
 
 ### 配置说明
@@ -217,6 +231,36 @@ cd Emoji_aiAurora
 4. 输入博查AI API Key
 5. 对话时点击搜索图标启用搜索
 
+### 🧪 测试
+
+项目包含完整的测试体系：
+
+```bash
+# 运行所有单元测试
+npx vitest run
+
+# 监听模式 (开发)
+npx vitest
+
+# 生成覆盖率报告
+npx vitest run --coverage
+
+# 运行 E2E 测试 (Playwright)
+npx playwright test
+
+# E2E 交互式调试
+npx playwright test --ui
+
+# 运行性能基准测试
+bash scripts/run-benchmark.sh
+```
+
+测试覆盖：
+- **单元测试** (Vitest): `llm.ts`、`streamParser.ts`、语音模块
+- **E2E 测试** (Playwright): Chromium 浏览器端到端流程
+- **集成测试**: 组件交互、API 集成
+- **性能基准**: 情绪检测、LLM 响应、语音性能
+
 ### 支持的语言
 
 中文 (zh-CN)、英语 (en-US)、日语 (ja-JP)、韩语 (ko-KR)、法语 (fr-FR)、德语 (de-DE)、西班牙语 (es-ES)、葡萄牙语 (pt-BR)、俄语 (ru-RU)、阿拉伯语 (ar-SA)
@@ -252,6 +296,23 @@ models_infer/                  # 语音推理服务
 ├── funasr_server.py           # ASR (FunASR-Nano, 端口 8001)
 └── qwen3_tts_server.py        # TTS (Qwen3-TTS-1.7B, 端口 8002)
 
+tests/                         # 测试套件
+├── unit/                      # 单元测试 (Vitest)
+│   ├── llm.test.ts
+│   ├── streamParser.test.ts
+│   └── voice.test.ts
+├── e2e/                       # E2E 测试 (Playwright)
+│   └── benchmark-e2e.spec.ts
+├── integration/               # 集成测试
+└── performance/               # 性能测试
+
+benchmark/                     # 性能基准
+├── emotion-benchmark.json
+├── llm-benchmark.json
+├── voice-benchmark.json
+├── benchmark.md
+└── ...
+
 electron/
 ├── main.ts                    # Electron 主进程
 └── preload.ts                 # 上下文桥接
@@ -261,9 +322,26 @@ electron/
 
 ![alt text](image-1.png)
 
-### 更新日志
+### Changelog
 
-#### 2026-05-21 — 安全加固与错误处理优化
+#### 2026-06-05 — Testing Infrastructure, Benchmarks & Avatar Polish
+
+| Category | Changes | File |
+|------|---------|------|
+| 🟢 Testing | Added Vitest 4.x unit test framework with jsdom environment | `vitest.config.ts`, `tests/setup.ts` |
+| 🟢 Testing | Unit tests for `llm.ts`, `streamParser.ts`, voice services | `tests/unit/` |
+| 🟢 Testing | Playwright 1.60 E2E tests (chromium, parallel mode) | `playwright.config.ts`, `tests/e2e/` |
+| 🟢 Testing | Integration and performance test suites | `tests/integration/`, `tests/performance/` |
+| 🟡 Benchmark | Comprehensive benchmark suite (emotion, LLM, voice, perf) | `benchmark/` |
+| 🟡 Benchmark | Performance benchmark scripts with threshold validation | `scripts/` |
+| 🟠 Particle | 4-color star particle system (primary/secondary/accent/glow) | `src/components/Avatar/AvatarCanvas.tsx` |
+| 🟠 Particle | Increased to 60-100 particles (based on emotion intensity) | `src/components/Avatar/AvatarCanvas.tsx` |
+| 🟠 Particle | Added `key={emotion}` to ensure correct re-render on emotion change | `src/components/Avatar/AvatarCanvas.tsx` |
+| 🟢 Eyebrow | Base position increased 0.32→0.35 to prevent occlusion by eyes | `src/components/Avatar/AvatarCanvas.tsx` |
+| 🟢 Eyebrow | Dynamic compensation `(1 - eyeScaleY) * 0.5` for auto-adjust when eyes shrink | `src/components/Avatar/AvatarCanvas.tsx` |
+| 🟢 Eyebrow | Adjusted vertical offset for all emotions to ensure eyebrows are always visible | `src/components/Avatar/AvatarCanvas.tsx` |
+
+#### 2026-05-21 — Security Hardening & Error Handling
 
 | 类别 | 修改内容 | 文件 |
 |------|---------|------|
@@ -323,6 +401,36 @@ MIT
 - Bocha AI recommended for China mainland (free tier available)
 - Click search icon in chat to enable real-time search results
 
+#### 🧪 Testing
+
+The project includes a comprehensive testing suite:
+
+```bash
+# Run all unit tests
+npx vitest run
+
+# Watch mode (development)
+npx vitest
+
+# Generate coverage report
+npx vitest run --coverage
+
+# Run E2E tests (Playwright)
+npx playwright test
+
+# Interactive E2E debugging
+npx playwright test --ui
+
+# Run performance benchmarks
+bash scripts/run-benchmark.sh
+```
+
+Coverage:
+- **Unit Tests** (Vitest): `llm.ts`, `streamParser.ts`, voice modules
+- **E2E Tests** (Playwright): Chromium browser end-to-end flows
+- **Integration Tests**: Component interactions, API integration
+- **Performance Benchmarks**: Emotion detection, LLM response, voice performance
+
 #### 👤 Multiple Personalities
 
 - **Default**: Warm and friendly AI companion
@@ -346,12 +454,13 @@ MIT
 | ---------------- | ------------------------------------------------------- |
 | Build            | Vite 5                                                 |
 | Frontend         | React 18, TypeScript 5                                 |
-| 3D Rendering     | Three.js 0.158, @react-three/fiber, @react-three/drei |
+| 3D Rendering     | Three.js 0.158, @react-three/fiber, @react-three/drei (Star particle system) |
 | State Management | Zustand 4                                              |
 | Markdown         | react-markdown 9.x                                     |
 | LLM              | OpenAI Compatible API, Ollama                          |
 | Web Search       | Bocha AI, SerpAPI, Wikipedia, DuckDuckGo               |
 | Voice            | Web Speech API (Recognition + Synthesis)               |
+| Testing          | Vitest 4.x, Playwright 1.60, Testing Library            |
 | Desktop          | Electron 41 (Optional)                                 |
 
 ### Quick Start
@@ -373,6 +482,19 @@ npm run build
 
 # Build (Electron)
 npm run electron:build
+```
+
+### Testing
+
+```bash
+# Unit tests
+npx vitest run
+
+# E2E tests
+npx playwright test
+
+# Coverage
+npx vitest run --coverage
 ```
 
 ### Configuration

@@ -168,10 +168,11 @@ async function searchWithBing(query: string, apiKey: string): Promise<SearchResp
  * SerpAPI - 支持百度搜索!
  */
 async function searchWithSerpAPI(query: string, apiKey: string): Promise<SearchResponse> {
-  const url = `https://serpapi.com/search?q=${encodeURIComponent(query)}&api_key=${apiKey}&num=5&hl=zh-cn`
+  const url = `https://serpapi.com/search?q=${encodeURIComponent(query)}&num=5&hl=zh-cn`
   
   const response = await fetch(url, {
-    method: 'GET'
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${apiKey}` }
   })
 
   if (!response.ok) {

@@ -171,5 +171,15 @@ export const getSystemPrompt = (personality: string, language: string = 'zh-CN')
   })
   const dateInstruction = `[重要] 当前日期和时间: ${currentDate}。如果用户问关于日期的问题（如今天星期几、今天几号等），请以此日期为准。搜索结果中的日期可能不准确，不要完全依赖搜索结果回答日期问题。`
   
-  return `${basePrompt} ${langInstruction} ${dateInstruction}`
+  const emotionNames: Record<string, string> = {
+    happy: '开心', excited: '兴奋', love: '喜爱', sad: '悲伤',
+    concerned: '担忧', angry: '愤怒', surprised: '惊讶', fearful: '恐惧',
+    disgusted: '厌恶', neutral: '平静', thinking: '思考', sleepy: '困倦',
+    confused: '困惑', embarrassed: '窘迫', helpless: '无奈', jealous: '吃醋',
+    longing: '怅然若失', shy: '害羞', playful: '调皮', proud: '自豪', grateful: '感激'
+  }
+  const emotionListStr = Object.entries(emotionNames).map(([k, v]) => `${v}="emotion":"${k}"`).join(', ')
+  const emotionGameInstruction = `\n\n[重要: 情绪表达模式] 当用户要求你用特定情绪说话、展示情绪或玩情绪游戏时（如"用开心的语气说"、"表演悲伤的表情"、"玩情绪游戏"等），你必须先回复一个控制指令，格式为：{"emotion":"情绪的英文名称","action":"speak"}，然后再回复正常内容。\n\n情绪列表：${emotionListStr}\n\n重要：emotion的值必须是上面列表中的英文名称之一，不要自己创造情绪名称。例如：愤怒="emotion":"angry"，开心="emotion":"happy"，悲伤="emotion":"sad"`
+  
+  return `${basePrompt} ${langInstruction} ${dateInstruction}${emotionGameInstruction}`
 }

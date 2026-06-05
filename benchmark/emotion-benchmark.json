@@ -1,0 +1,561 @@
+{
+  "title": "Emoji_aiAurora Emotion System Benchmark",
+  "version": "1.0.0",
+  "description": "Comprehensive benchmark for the 21-emotion system including PAD model, visual expressions, keyword mappings, and TTS instruct mappings",
+
+  "emotions": {
+    "base_emotions": [
+      {
+        "id": "EM-001",
+        "emotion": "happy",
+        "name": "开心",
+        "description": "愉悦、积极的情绪",
+        "pad": { "valence": 0.8, "arousal": 0.3, "dominance": 0.2 },
+        "pad_ranges": {
+          "valence": { "min": 0.6, "max": 1.0 },
+          "arousal": { "min": 0.1, "max": 0.5 },
+          "dominance": { "min": 0.0, "max": 0.4 }
+        },
+        "expression": "smile",
+        "color": "#FFD700",
+        "color_validation": { "format": "hex6", "unique": true },
+        "eye_config": {
+          "eyeScale": [1.0, 0.85],
+          "pupilScale": 1.0,
+          "pupilOffset": [0, 0],
+          "isClosed": false,
+          "hasSparkle": false,
+          "isWink": false,
+          "eyeShape": "squinted"
+        },
+        "keywords": ["开心", "高兴", "快乐", "happy", "glad", "joy", "太好了", "棒", "不错", "真好"],
+        "personalities": ["治愈系", "元气系", "沉稳"],
+        "tts_instruct": "用开心愉悦的语气说",
+        "test_inputs": [
+          { "input": "今天太开心了！", "expected_emotion": "happy" },
+          { "input": "I'm so happy!", "expected_emotion": "happy" }
+        ]
+      },
+      {
+        "id": "EM-002",
+        "emotion": "excited",
+        "name": "兴奋",
+        "description": "高度唤醒的积极情绪",
+        "pad": { "valence": 0.9, "arousal": 0.9, "dominance": 0.3 },
+        "expression": "excited",
+        "color": "#FF6B6B",
+        "eye_config": {
+          "eyeScale": [1.3, 1.3],
+          "pupilScale": 1.3,
+          "isClosed": false,
+          "hasSparkle": true,
+          "eyeShape": "wide"
+        },
+        "keywords": ["兴奋", "激动", "太棒了", "excited", "awesome", "wow", "哇塞", "厉害"],
+        "personalities": ["元气系", "戏精"],
+        "tts_instruct": "用兴奋激动的语气说",
+        "pulse_effect": true,
+        "test_inputs": [
+          { "input": "太棒了！！！", "expected_emotion": "excited" },
+          { "input": "I'm so excited!", "expected_emotion": "excited" }
+        ]
+      },
+      {
+        "id": "EM-003",
+        "emotion": "love",
+        "name": "喜爱",
+        "description": "亲密感强的积极情绪",
+        "pad": { "valence": 0.9, "arousal": 0.4, "dominance": -0.1 },
+        "expression": "love",
+        "color": "#FF69B4",
+        "eye_config": {
+          "eyeScale": [1.1, 1.1],
+          "pupilScale": 1.1,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": ["爱", "喜欢", "爱你", "love", "adore", "么么哒", "亲亲", "宝贝"],
+        "personalities": ["治愈系", "傲娇系"],
+        "tts_instruct": "用温柔亲密的语气说",
+        "pulse_effect": true,
+        "test_inputs": [
+          { "input": "我爱你！", "expected_emotion": "love" }
+        ]
+      },
+      {
+        "id": "EM-004",
+        "emotion": "sad",
+        "name": "悲伤",
+        "description": "消极情绪",
+        "pad": { "valence": -0.7, "arousal": -0.2, "dominance": -0.3 },
+        "expression": "frown",
+        "color": "#4169E1",
+        "eye_config": {
+          "eyeScale": [0.85, 0.85],
+          "pupilScale": 0.9,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "droopy"
+        },
+        "keywords": ["难过", "伤心", "悲伤", "sad", "sorry", "upset", "哭", "沮丧", "郁闷"],
+        "personalities": ["治愈系"],
+        "tts_instruct": "用温柔安慰的语气说",
+        "test_inputs": [
+          { "input": "我很难过...", "expected_emotion": "sad" }
+        ]
+      },
+      {
+        "id": "EM-005",
+        "emotion": "angry",
+        "name": "生气",
+        "description": "高唤醒负面情绪",
+        "pad": { "valence": -0.8, "arousal": 0.9, "dominance": 0.5 },
+        "expression": "angry",
+        "color": "#DC143C",
+        "eye_config": {
+          "eyeScale": [0.9, 0.9],
+          "pupilScale": 1.0,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "narrowed"
+        },
+        "keywords": ["生气", "愤怒", "angry", "烦", "讨厌", "不爽"],
+        "personalities": ["傲娇系", "戏精"],
+        "tts_instruct": "用略带不满但宠溺的语气说",
+        "shake_effect": true,
+        "pulse_effect": true,
+        "test_inputs": [
+          { "input": "哼！我生气了！", "expected_emotion": "angry" }
+        ]
+      },
+      {
+        "id": "EM-006",
+        "emotion": "neutral",
+        "name": "中性",
+        "description": "平和状态",
+        "pad": { "valence": 0.0, "arousal": 0.0, "dominance": 0.0 },
+        "expression": "neutral",
+        "color": "#87CEEB",
+        "eye_config": {
+          "eyeScale": [1.0, 1.0],
+          "pupilScale": 1.0,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": [],
+        "personalities": ["沉稳", "元气系", "治愈系", "傲娇系", "戏精"],
+        "tts_instruct": "用平静自然的语气说",
+        "default_emotion": true,
+        "test_inputs": [
+          { "input": "好的", "expected_emotion": "neutral" }
+        ]
+      },
+      {
+        "id": "EM-007",
+        "emotion": "thinking",
+        "name": "思考",
+        "description": "低唤醒理性状态",
+        "pad": { "valence": -0.1, "arousal": -0.3, "dominance": 0.1 },
+        "expression": "thinking",
+        "color": "#708090",
+        "eye_config": {
+          "eyeScale": [0.9, 0.9],
+          "pupilScale": 0.85,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "squinted"
+        },
+        "keywords": ["思考", "想", "考虑", "emmm", "hmm", "...", "嗯"],
+        "personalities": ["沉稳"],
+        "tts_instruct": "用认真思考的语气说",
+        "streaming_emotion": true,
+        "test_inputs": [
+          { "input": "让我想想...", "expected_emotion": "thinking" }
+        ]
+      },
+      {
+        "id": "EM-008",
+        "emotion": "surprised",
+        "name": "惊讶",
+        "description": "意外/震惊",
+        "pad": { "valence": 0.1, "arousal": 0.8, "dominance": 0.1 },
+        "expression": "surprised",
+        "color": "#9370DB",
+        "eye_config": {
+          "eyeScale": [1.4, 1.4],
+          "pupilScale": 1.4,
+          "isClosed": false,
+          "hasSparkle": true,
+          "eyeShape": "wide"
+        },
+        "keywords": ["惊讶", "吃惊", "wow", "不会吧", "真的吗", "surprised", "amazing"],
+        "personalities": ["元气系", "戏精"],
+        "tts_instruct": "用惊讶的语气说",
+        "test_inputs": [
+          { "input": "哇！真的吗？", "expected_emotion": "surprised" }
+        ]
+      },
+      {
+        "id": "EM-009",
+        "emotion": "fearful",
+        "name": "害怕",
+        "description": "恐惧/担忧",
+        "pad": { "valence": -0.6, "arousal": 0.6, "dominance": -0.4 },
+        "expression": "fearful",
+        "color": "#483D8B",
+        "eye_config": {
+          "eyeScale": [1.2, 1.2],
+          "pupilScale": 1.5,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "wide"
+        },
+        "keywords": ["害怕", "恐惧", "担心", "怕", "scared", "afraid", "worried"],
+        "personalities": ["治愈系"],
+        "tts_instruct": "用温柔安抚的语气说",
+        "test_inputs": [
+          { "input": "我有点害怕...", "expected_emotion": "fearful" }
+        ]
+      },
+      {
+        "id": "EM-010",
+        "emotion": "disgusted",
+        "name": "厌恶",
+        "description": "反感/排斥",
+        "pad": { "valence": -0.7, "arousal": 0.4, "dominance": 0.0 },
+        "expression": "disgusted",
+        "color": "#556B2F",
+        "eye_config": {
+          "eyeScale": [0.85, 0.85],
+          "pupilScale": 0.9,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "narrowed"
+        },
+        "keywords": ["恶心", "讨厌", "反感", "disgusted", "gross", "hate"],
+        "personalities": ["傲娇系"],
+        "tts_instruct": "用嫌弃但可爱的语气说",
+        "test_inputs": [
+          { "input": "这太恶心了", "expected_emotion": "disgusted" }
+        ]
+      },
+      {
+        "id": "EM-011",
+        "emotion": "sleepy",
+        "name": "困倦",
+        "description": "低能量状态",
+        "pad": { "valence": -0.1, "arousal": -0.7, "dominance": -0.2 },
+        "expression": "sleepy",
+        "color": "#B0C4DE",
+        "eye_config": {
+          "eyeScale": [0.7, 0.7],
+          "pupilScale": 0.8,
+          "isClosed": true,
+          "hasSparkle": false,
+          "eyeShape": "droopy"
+        },
+        "keywords": ["困", "累了", "想睡觉", "sleepy", "tired", "zzz"],
+        "personalities": ["沉稳", "治愈系"],
+        "tts_instruct": "用慵懒的语气说",
+        "test_inputs": [
+          { "input": "我好困...", "expected_emotion": "sleepy" }
+        ]
+      },
+      {
+        "id": "EM-012",
+        "emotion": "concerned",
+        "name": "担忧",
+        "description": "轻度关切",
+        "pad": { "valence": -0.3, "arousal": 0.2, "dominance": -0.2 },
+        "expression": "concerned",
+        "color": "#6495ED",
+        "eye_config": {
+          "eyeScale": [1.0, 1.0],
+          "pupilScale": 1.0,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": ["担心", "担忧", "concerned", "worry", "怎么办"],
+        "personalities": ["治愈系", "沉稳"],
+        "tts_instruct": "用关切温柔的语气说",
+        "test_inputs": [
+          { "input": "我有点担心你", "expected_emotion": "concerned" }
+        ]
+      }
+    ],
+    "personality_emotions": [
+      {
+        "id": "EM-013",
+        "emotion": "confused",
+        "name": "困惑",
+        "description": "不解/迷茫",
+        "pad": { "valence": -0.2, "arousal": 0.3, "dominance": -0.3 },
+        "expression": "confused",
+        "color": "#DDA0DD",
+        "eye_config": {
+          "eyeScale": [1.1, 1.1],
+          "pupilScale": 1.0,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": ["困惑", "不懂", "confused", "什么", "为什么", "怎么"],
+        "personalities": ["元气系", "治愈系"],
+        "tts_instruct": "用疑惑可爱的语气说",
+        "test_inputs": [
+          { "input": "这是什么啊？", "expected_emotion": "confused" }
+        ]
+      },
+      {
+        "id": "EM-014",
+        "emotion": "embarrassed",
+        "name": "窘迫",
+        "description": "害羞/不好意思",
+        "pad": { "valence": -0.1, "arousal": 0.4, "dominance": -0.4 },
+        "expression": "embarrassed",
+        "color": "#FFB6C1",
+        "eye_config": {
+          "eyeScale": [0.9, 0.9],
+          "pupilScale": 0.9,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "squinted"
+        },
+        "keywords": ["害羞", "不好意思", "embarrassed", "尴尬", "脸红"],
+        "personalities": ["治愈系", "傲娇系"],
+        "tts_instruct": "用害羞的语气说",
+        "test_inputs": [
+          { "input": "好害羞啊...", "expected_emotion": "embarrassed" }
+        ]
+      },
+      {
+        "id": "EM-015",
+        "emotion": "helpless",
+        "name": "无奈",
+        "description": "宠溺的无奈",
+        "pad": { "valence": 0.0, "arousal": -0.2, "dominance": -0.5 },
+        "expression": "helpless",
+        "color": "#D8BFD8",
+        "eye_config": {
+          "eyeScale": [0.9, 0.9],
+          "pupilScale": 0.85,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "droopy"
+        },
+        "keywords": ["无奈", "没办法", "helpless", "真拿你没办法", "算了"],
+        "personalities": ["治愈系", "傲娇系"],
+        "tts_instruct": "用宠溺无奈的语气说",
+        "test_inputs": [
+          { "input": "唉，真拿你没办法", "expected_emotion": "helpless" }
+        ]
+      },
+      {
+        "id": "EM-016",
+        "emotion": "jealous",
+        "name": "吃醋",
+        "description": "嫉妒情绪",
+        "pad": { "valence": -0.4, "arousal": 0.5, "dominance": 0.1 },
+        "expression": "jealous",
+        "color": "#CD853F",
+        "eye_config": {
+          "eyeScale": [1.0, 1.0],
+          "pupilScale": 1.1,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "narrowed"
+        },
+        "keywords": ["吃醋", "嫉妒", "jealous", "酸", "凭什么"],
+        "personalities": ["傲娇系"],
+        "tts_instruct": "用傲娇的语气说",
+        "test_inputs": [
+          { "input": "哼，我才不在乎呢", "expected_emotion": "jealous" }
+        ]
+      },
+      {
+        "id": "EM-017",
+        "emotion": "longing",
+        "name": "怅然",
+        "description": "幽怨/思念",
+        "pad": { "valence": -0.4, "arousal": 0.0, "dominance": -0.3 },
+        "expression": "longing",
+        "color": "#778899",
+        "eye_config": {
+          "eyeScale": [0.9, 0.9],
+          "pupilScale": 0.9,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "droopy"
+        },
+        "keywords": ["想", "思念", "longing", "好想", "好久了", "怀念"],
+        "personalities": ["治愈系", "沉稳"],
+        "tts_instruct": "用悠远惆怅的语气说",
+        "test_inputs": [
+          { "input": "好想见到你...", "expected_emotion": "longing" }
+        ]
+      },
+      {
+        "id": "EM-018",
+        "emotion": "shy",
+        "name": "害羞",
+        "description": "羞涩表现",
+        "pad": { "valence": 0.1, "arousal": 0.3, "dominance": -0.5 },
+        "expression": "shy",
+        "color": "#FFC0CB",
+        "eye_config": {
+          "eyeScale": [0.85, 0.85],
+          "pupilScale": 0.9,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "squinted"
+        },
+        "keywords": ["害羞", "羞涩", "shy", "不好意思"],
+        "personalities": ["治愈系", "元气系"],
+        "tts_instruct": "用羞涩的语气说",
+        "test_inputs": [
+          { "input": "我有点害羞...", "expected_emotion": "shy" }
+        ]
+      },
+      {
+        "id": "EM-019",
+        "emotion": "playful",
+        "name": "调皮",
+        "description": "活泼俏皮",
+        "pad": { "valence": 0.6, "arousal": 0.6, "dominance": 0.2 },
+        "expression": "playful",
+        "color": "#FFDAB9",
+        "eye_config": {
+          "eyeScale": [1.1, 1.1],
+          "pupilScale": 1.1,
+          "isClosed": false,
+          "hasSparkle": true,
+          "eyeShape": "normal"
+        },
+        "keywords": ["调皮", "恶作剧", "playful", "逗你", "哈哈"],
+        "personalities": ["元气系", "戏精"],
+        "tts_instruct": "用俏皮的语气说",
+        "pulse_effect": true,
+        "test_inputs": [
+          { "input": "哈哈，逗你玩的！", "expected_emotion": "playful" }
+        ]
+      },
+      {
+        "id": "EM-020",
+        "emotion": "proud",
+        "name": "自豪",
+        "description": "骄傲情绪",
+        "pad": { "valence": 0.7, "arousal": 0.4, "dominance": 0.5 },
+        "expression": "proud",
+        "color": "#FFD700",
+        "eye_config": {
+          "eyeScale": [1.1, 1.1],
+          "pupilScale": 1.1,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": ["自豪", "骄傲", "proud", "厉害", "棒"],
+        "personalities": ["傲娇系", "沉稳"],
+        "tts_instruct": "用自信的语气说",
+        "pulse_effect": true,
+        "test_inputs": [
+          { "input": "我很骄傲！", "expected_emotion": "proud" }
+        ]
+      },
+      {
+        "id": "EM-021",
+        "emotion": "grateful",
+        "name": "感激",
+        "description": "感恩情绪",
+        "pad": { "valence": 0.6, "arousal": 0.2, "dominance": 0.1 },
+        "expression": "grateful",
+        "color": "#98FB98",
+        "eye_config": {
+          "eyeScale": [1.0, 1.0],
+          "pupilScale": 1.0,
+          "isClosed": false,
+          "hasSparkle": false,
+          "eyeShape": "normal"
+        },
+        "keywords": ["感谢", "谢谢", "grateful", "感激", "感恩"],
+        "personalities": ["治愈系", "元气系", "沉稳"],
+        "tts_instruct": "用真诚感激的语气说",
+        "test_inputs": [
+          { "input": "非常感谢你！", "expected_emotion": "grateful" }
+        ]
+      }
+    ]
+  },
+
+  "eye_shapes": [
+    { "name": "normal", "description": "标准眼睛" },
+    { "name": "squinted", "description": "眯眼" },
+    { "name": "wide", "description": "大眼睛" },
+    { "name": "droopy", "description": "下垂眼" },
+    { "name": "narrowed", "description": "眯起眼" },
+    { "name": "closed", "description": "闭眼" },
+    { "name": "wink", "description": "眨眼" }
+  ],
+
+  "effects": [
+    {
+      "name": "shake",
+      "description": "愤怒摇晃动画",
+      "emotions": ["angry"],
+      "axis": "x",
+      "frequency_hz": 8,
+      "amplitude": 0.05
+    },
+    {
+      "name": "pulse",
+      "description": "缩放脉冲动画",
+      "emotions": ["excited", "love", "angry", "proud", "playful"],
+      "scale_range": [0.98, 1.02],
+      "frequency_hz": 2
+    }
+  ],
+
+  "emotion_detection_chain": {
+    "description": "优先级检测链",
+    "priority_order": [
+      {
+        "step": 1,
+        "name": "JSON Extraction",
+        "description": "从LLM响应中提取JSON情绪",
+        "patterns": ["{\"emotion\": \"...\"}", "emotion: \"...\""]
+      },
+      {
+        "step": 2,
+        "name": "Context Analysis",
+        "description": "基于用户消息和回复上下文分析",
+        "consider_user_message": true,
+        "consider_personality": true
+      },
+      {
+        "step": 3,
+        "name": "Keyword Detection",
+        "description": "关键词匹配",
+        "case_insensitive": true
+      },
+      {
+        "step": 4,
+        "name": "Punctuation Analysis",
+        "description": "标点符号分析",
+        "rules": [
+          { "pattern": "!!+", "emotion": "excited" },
+          { "pattern": "\\?\\?+", "emotion": "confused" },
+          { "pattern": "\\.\\.\\.|……", "emotion": "thinking" }
+        ]
+      },
+      {
+        "step": 5,
+        "name": "Fallback",
+        "description": "默认中性",
+        "result": "neutral"
+      }
+    ]
+  }
+}

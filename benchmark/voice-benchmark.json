@@ -1,0 +1,252 @@
+{
+  "title": "Emoji_aiAurora Voice Services Benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark for ASR audio capture, TTS streaming, and voice service integration",
+
+  "asr_audio_capture": {
+    "description": "Tests for AudioCapture class",
+    "source_file": "src/utils/audioCapture.ts",
+    "tests": [
+      {
+        "id": "VOICE-001",
+        "name": "AudioCapture initialization",
+        "expected": {
+          "running": false,
+          "stream": null,
+          "ctx": null,
+          "source": null,
+          "processor": null
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-002",
+        "name": "AudioCapture start requests microphone permission",
+        "expected": {
+          "calls_getUserMedia": true,
+          "sampleRate": 16000,
+          "bufferSize": 4096,
+          "running": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-003",
+        "name": "AudioCapture PCM conversion (Float32 → Int16)",
+        "input_samples": [0.0, 0.5, -0.5, 1.0, -1.0],
+        "expected_int16": [0, 16384, -16384, 32767, -32768],
+        "expected_config": { "sample_rate": 16000, "channels": 1 },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-004",
+        "name": "AudioCapture stop releases all resources",
+        "expected": {
+          "running": false,
+          "processor_disconnected": true,
+          "source_disconnected": true,
+          "ctx_closed": true,
+          "stream_tracks_stopped": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-005",
+        "name": "AudioCapture microphone permission denied",
+        "expected": {
+          "onError_called": true,
+          "error_message_contains": "Microphone access denied",
+          "running": false
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-006",
+        "name": "AudioCapture overflow clamping",
+        "input_samples": [1.5, -1.5, 0.0],
+        "expected_int16": [32767, -32768, 0],
+        "description": "Values outside [-1, 1] must be clamped to Int16 range",
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "tts_client": {
+    "description": "Tests for TTSClient class",
+    "source_file": "src/utils/ttsClient.ts",
+    "tests": [
+      {
+        "id": "VOICE-007",
+        "name": "TTSClient initialization",
+        "expected": {
+          "speaking": false,
+          "controller": null,
+          "settings_preserved": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-008",
+        "name": "TTSClient speak sends correct request",
+        "expected": {
+          "fetch_called": true,
+          "correct_headers": true,
+          "emotion_instruct_included": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-009",
+        "name": "TTSClient stream parsing (WAV chunks)",
+        "expected": {
+          "chunks_received": true,
+          "audio_blob_created": true,
+          "onChunk_callback": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-010",
+        "name": "TTSClient stop releases resources",
+        "expected": {
+          "speaking": false,
+          "controller_aborted": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-011",
+        "name": "TTSClient handles server error",
+        "expected": {
+          "onError_called": true,
+          "speaking_set_to_false": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-012",
+        "name": "TTSClient prevents double speak",
+        "scenario": "call speak() while already speaking",
+        "expected": {
+          "previous_stopped": true,
+          "new_speak_started": true
+        },
+        "priority": "P2"
+      }
+    ]
+  },
+
+  "endpoint_health": {
+    "description": "Health check tests for voice service endpoints",
+    "tests": [
+      {
+        "id": "VOICE-013",
+        "name": "ASR endpoint health check",
+        "endpoint": "http://localhost:8001",
+        "expected": {
+          "status": "healthy",
+          "response_time_ms": "< 500",
+          "correct_status_code": 200
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-014",
+        "name": "TTS endpoint health check",
+        "endpoint": "http://localhost:8002",
+        "expected": {
+          "status": "healthy",
+          "response_time_ms": "< 500",
+          "correct_status_code": 200
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-015",
+        "name": "ASR endpoint failure handling",
+        "scenario": "ASR server offline",
+        "expected": {
+          "graceful_error": true,
+          "user_notification": true,
+          "fallback_to_text": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-016",
+        "name": "TTS endpoint failure handling",
+        "scenario": "TTS server offline",
+        "expected": {
+          "graceful_error": true,
+          "user_notification": true
+        },
+        "priority": "P1"
+      }
+    ]
+  },
+
+  "voice_chat_integration": {
+    "description": "End-to-end voice chat flow",
+    "tests": [
+      {
+        "id": "VOICE-017",
+        "name": "Voice input → ASR → Chat message → LLM response",
+        "steps": [
+          "1. User clicks voice button",
+          "2. AudioCapture starts recording",
+          "3. User speaks message",
+          "4. User clicks stop",
+          "5. PCM sent to ASR server",
+          "6. Transcribed text added to chat",
+          "7. LLM processes message"
+        ],
+        "expected": {
+          "voice_button_toggles": true,
+          "recording_indicator": true,
+          "transcribed_text_displayed": true,
+          "llm_response_received": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-018",
+        "name": "LLM response → TTS → Audio playback",
+        "steps": [
+          "1. LLM generates response",
+          "2. Response text sent to TTS",
+          "3. Audio chunks stream back",
+          "4. Audio played sentence-by-sentence"
+        ],
+        "expected": {
+          "tts_called": true,
+          "audio_chunks_received": true,
+          "sentence_boundaries_respected": true,
+          "playback_completes": true
+        },
+        "priority": "P0"
+      },
+      {
+        "id": "VOICE-019",
+        "name": "Voice toggle (Electron IPC)",
+        "platform": "electron",
+        "expected": {
+          "ipc_channel_works": true,
+          "voice_mode_toggles": true
+        },
+        "priority": "P1"
+      },
+      {
+        "id": "VOICE-020",
+        "name": "Stream mode TTS sentence timing",
+        "mode": "stream",
+        "expected": {
+          "sentence_boundary_detection": true,
+          "preemptive_chunk_fetch": true,
+          "seamless_playback": true,
+          "gap_between_sentences_ms": "< 100"
+        },
+        "priority": "P1"
+      }
+    ]
+  }
+}

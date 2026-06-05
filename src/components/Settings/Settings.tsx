@@ -79,18 +79,10 @@ export default function Settings({ onClose }: SettingsProps) {
   
   // Initialize localSettings - load from localStorage directly, not from store
   const [localSettings, setLocalSettings] = useState<typeof settings>(() => {
-    // Always try to load from localStorage first (most reliable)
     const stored = loadFromStorage()
-    console.log('=== SETTINGS LOAD ===')
-    console.log('stored from localStorage:', JSON.stringify(stored))
-    console.log('store default settings:', JSON.stringify(settings))
     if (stored) {
-      const merged = { ...settings, ...stored } as typeof settings
-      console.log('merged settings:', JSON.stringify(merged))
-      console.log('>>> modelName after merge:', merged.modelName)
-      return merged
+      return { ...settings, ...stored } as typeof settings
     }
-    // Fall back to store settings
     return settings
   })
   
@@ -180,12 +172,8 @@ export default function Settings({ onClose }: SettingsProps) {
         setPersonality(pers)
       })
     } else {
-      // Browser: load from localStorage - settings already loaded in useState initializer
       const stored = loadFromStorage()
-      console.log('=== USE EFFECT: ELECTRON NOT AVAILABLE ===')
-      console.log('loaded from localStorage:', JSON.stringify(stored))
       if (stored) {
-        console.log('>>> Calling setSettings from useEffect')
         setSettings(stored as unknown as Settings)
       }
       const pers = loadPersonalityFromStorage()
@@ -197,11 +185,6 @@ export default function Settings({ onClose }: SettingsProps) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      console.log('=== SETTINGS SAVE ===')
-      console.log('localSettings to save:', JSON.stringify(localSettings))
-      console.log('modelName being saved:', localSettings.modelName)
-      
-      // Ensure we have a complete settings object with all required fields
       const settingsToSave = {
         apiProvider: localSettings.apiProvider || 'openai',
         apiUrl: localSettings.apiUrl || 'https://api.openai.com/v1',
@@ -225,9 +208,6 @@ export default function Settings({ onClose }: SettingsProps) {
         ttsLanguage: localSettings.ttsLanguage || 'Chinese'
       }
       
-      console.log('>>> Complete settings to save:', JSON.stringify(settingsToSave))
-      console.log('>>> modelName in settingsToSave:', settingsToSave.modelName)
-      
       // Save settings to localStorage FIRST (most reliable)
       saveToStorage(settingsToSave as unknown as Record<string, unknown>)
       
@@ -245,10 +225,8 @@ export default function Settings({ onClose }: SettingsProps) {
       }
       
       // Update the Zustand store with the new settings - use the complete object
-      console.log('>>> Calling setSettings with modelName:', settingsToSave.modelName)
-      setSettings(settingsToSave)
+setSettings(settingsToSave as unknown as Settings)
       setPersonality(localPersonality)
-      console.log('Updated Zustand store')
       
       // Close modal after a small delay to ensure store updates propagate
       setTimeout(() => {
