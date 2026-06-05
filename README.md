@@ -1,6 +1,6 @@
 # aiAurora ✨
 
-*最后更新: 2026-06-05*
+*最后更新: 2026-06-05*  (最新: 智能搜索路由 + RSS 新闻搜索)
 
 [English](#english) | [中文](#中文)
 
@@ -48,6 +48,8 @@
 #### 🔍 联网搜索
 
 - 基于 **Scrapling** 驱动的免费网页搜索，通过 DuckDuckGo 获取实时搜索结果
+- **新闻搜索**：支持 RSS 新闻聚合（BBC、Reuters、Guardian 等源）+ DuckDuckGo 混合搜索
+- **智能搜索路由**：自动识别新闻、热点、加密货币等查询类型，路由到最佳搜索端点
 - 无需外部 API Key，零成本使用
 - 开启后在对话中点击搜索图标即可使用实时搜索结果
 - 需本地启动 Scrapling 搜索服务器（见下方"搜索服务"章节）
@@ -93,7 +95,9 @@
 ├─────────────────────────────────────────────────────────────┤
 │                      联网搜索                                 │
 │  utils/webSearch.ts → models_infer/scrapling_server.py      │
-│  ├── Scrapling FetcherSession (Chrome TLS 指纹)              │
+│  ├── 智能搜索路由 (新闻/热点/加密货币检测)                     │
+│  ├── Scrapling FetcherSession + httpx 双引擎 (Chrome TLS 指纹) │
+│  ├── RSS 新闻聚合 (BBC, Reuters, Guardian 等)                │
 │  ├── DuckDuckGo HTML 搜索 (免费，无需 API Key)                │
 │  └── 搜索结果注入 LLM 系统提示 (端口 8003)                     │
 ├─────────────────────────────────────────────────────────────┤
@@ -128,7 +132,7 @@
 | 状态管理   | Zustand 4                                                |
 | Markdown   | react-markdown 9.x                                       |
 | 大语言模型 | OpenAI 兼容 API, Ollama                                  |
-| 联网搜索   | Scrapling (DuckDuckGo, 免费)                             |
+| 联网搜索   | Scrapling + httpx 双引擎 (DuckDuckGo + RSS 新闻, 免费)  |
 | 语音 ASR   | FunASR-Nano-2512 (SenseVoice + Qwen3-0.6B)              |
 | 语音 TTS   | Qwen3-TTS-12Hz-1.7B-CustomVoice                         |
 | 测试       | Vitest 4.x, Playwright 1.60, Testing Library             |
@@ -226,15 +230,27 @@ cd Emoji_aiAurora
 
 ### 搜索服务
 
-联网搜索需要启动 Scrapling 搜索服务器（基于 Scrapling 的免费 DuckDuckGo 搜索）：
+联网搜索需要启动 Scrapling 搜索服务器（支持 DuckDuckGo 搜索 + RSS 新闻聚合）：
 
 ```bash
-# 首次使用：安装 Scrapling Python 包
+# 首次使用：安装必要的 Python 包
+pip install httpx defusedxml fastapi uvicorn
+# 可选：安装 Scrapling 以获取更好的反爬虫能力
 .venv/bin/pip install "scrapling[all]>=0.4.8"
 
 # 启动搜索服务器 (端口 8003)
-.venv/bin/python models_infer/scrapling_server.py
+python models_infer/scrapling_server.py
 ```
+
+**提供两个搜索端点**：
+- `POST /v1/search` — 通用网页搜索（Scrapling → httpx → DuckDuckGo）
+- `POST /v1/search/news` — 新闻搜索（RSS + DuckDuckGo 混合）
+
+前端自动根据查询语义路由：
+- **新闻类**（"今天的热点新闻"、"what happened today"）→ 新闻端点
+- **热点类**（"热搜"、"trending"）→ 热点新闻端点
+- **加密货币类**（"比特币行情"、"crypto"）→ 专用加密端点
+- **其他** → 通用搜索端点
 
 在 Settings → Web Search Settings 中配置：
 
@@ -304,7 +320,7 @@ src/
 └── utils/
     ├── llm.ts                 # LLM API 调用
     ├── streamParser.ts        # SSE 流解析
-    ├── webSearch.ts           # 联网搜索 (Scrapling)
+    ├── webSearch.ts           # 联网搜索 (Scrapling + RSS, 智能路由)
 
 models_infer/                  # 语音推理服务 + 搜索服务
 ├── funasr_server.py           # ASR (FunASR-Nano, 端口 8001)
@@ -359,6 +375,18 @@ electron/
 | 🟢 Eyebrow | Base position increased 0.32→0.35 to prevent occlusion by eyes | `src/components/Avatar/AvatarCanvas.tsx` |
 | 🟢 Eyebrow | Dynamic compensation `(1 - eyeScaleY) * 0.5` for auto-adjust when eyes shrink | `src/components/Avatar/AvatarCanvas.tsx` |
 | 🟢 Eyebrow | Adjusted vertical offset for all emotions to ensure eyebrows are always visible | `src/components/Avatar/AvatarCanvas.tsx` |
+
+#### 2026-06-05 — Smart Search Routing & RSS News Aggregation
+
+| Category | Changes | File |
+|------|---------|------|
+| 🔵 Search | Added smart query routing: auto-detects news/hot/crypto queries | `src/utils/webSearch.ts` |
+| 🔵 Search | Added `smartSearch()` as the main entry (replaces `webSearch`) | `src/utils/webSearch.ts` |
+| 🔵 Search | Added `searchNews()` with RSS news aggregation (BBC, Reuters, Guardian, etc.) | `src/utils/webSearch.ts` |
+| 🔵 Search | Added `/v1/search/news` endpoint on search server | `models_infer/scrapling_server.py` |
+| 🔵 Search | Upgraded scrapling server with multi-UA rotation, httpx fallback, RSS parsing | `models_infer/scrapling_server.py` |
+| 🔵 Search | Switched Chat.tsx from `webSearch` → `smartSearch` | `src/components/Chat/Chat.tsx` |
+| 🔵 Search | Scrapling dependency now optional — httpx-only mode for basic search | `models_infer/scrapling_server.py` |
 
 #### 2026-05-21 — Security Hardening & Error Handling
 
@@ -416,10 +444,11 @@ MIT
 
 #### 🔍 Web Search
 
-- **Scrapling**-powered free web search via DuckDuckGo for real-time results
+- **DuckDuckGo** scraping + **RSS news aggregation** for real-time results
+- **Smart search routing**: auto-detects news, hot topics, and crypto queries
 - No external API keys required — zero cost
 - Click the search icon in chat to enable real-time search
-- Requires local Scrapling search server (see Voice & Search Services below)
+- Requires local search server (see Web Search section below)
 
 #### 🧪 Testing
 
@@ -478,7 +507,7 @@ Coverage:
 | State Management | Zustand 4                                              |
 | Markdown         | react-markdown 9.x                                     |
 | LLM              | OpenAI Compatible API, Ollama                          |
-| Web Search       | Scrapling (DuckDuckGo, free)                           |
+| Web Search       | Scrapling + httpx dual-engine (DuckDuckGo + RSS news, free) |
 | Voice            | Web Speech API (Recognition + Synthesis)               |
 | Testing          | Vitest 4.x, Playwright 1.60, Testing Library            |
 | Desktop          | Electron 41 (Optional)                                 |
@@ -526,15 +555,29 @@ npx vitest run --coverage
 5. Optional: Enable voice and web search
 6. Save and start chatting
 
-### Web Search (Scrapling - Free, No API Key)
+### Web Search (Free, No API Key)
+
+The search server supports DuckDuckGo scraping + RSS news aggregation:
 
 ```bash
-# First time: install Scrapling Python package
+# First time: install Python packages
+pip install httpx defusedxml fastapi uvicorn
+# Optional: install Scrapling for better anti-bot capability
 .venv/bin/pip install "scrapling[all]>=0.4.8"
 
 # Start search server (port 8003)
-.venv/bin/python models_infer/scrapling_server.py
+python models_infer/scrapling_server.py
 ```
+
+**Two search endpoints**:
+- `POST /v1/search` — general web search (Scrapling → httpx → DuckDuckGo)
+- `POST /v1/search/news` — news search (RSS + DuckDuckGo hybrid)
+
+The frontend automatically routes queries:
+- **News queries** ("what happened today", "news") → news endpoint
+- **Hot/trending queries** → hot news endpoint
+- **Crypto queries** ("bitcoin", "crypto") → dedicated crypto endpoint
+- **Other** → general search endpoint
 
 In Settings → Web Search Settings, configure:
 
@@ -543,7 +586,7 @@ In Settings → Web Search Settings, configure:
 | Scrapling Server URL | `http://localhost:8003` |
 | Scrapling API Key | `sk-scrapling-demo` |
 
-Then enable web search in Settings and click the 🔍 search icon in chat. Powered by Scrapling + DuckDuckGo — zero cost, no external API keys needed.
+Then enable web search in Settings and click the 🔍 search icon in chat. Zero cost, no external API keys needed.
 
 ### Demo
 ![alt text](image-2.png)

@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { useChatStore, getSystemPrompt } from '../../stores/chatStore'
 import { sendToLLM, checkOllamaConnection, checkASRHealth, checkTTSHealth, parseEmotionFromResponse, analyzeEmotionWithLLM, cleanTextForTTS } from '../../utils/llm'
-import { webSearch, formatSearchResultsForLLM, checkScraplingHealth } from '../../utils/webSearch'
+import { smartSearch, formatSearchResultsForLLM, checkScraplingHealth } from '../../utils/webSearch'
 import { AudioCapture } from '../../utils/audioCapture'
 import { TTSClient } from '../../utils/ttsClient'
 import type { TTSChunk } from '../../utils/ttsClient'
@@ -210,7 +210,7 @@ export default function Chat() {
 
     if (shouldSearch) {
       try {
-        const searchResponse = await webSearch(messageText, currentSettings.scraplingUrl, currentSettings.scraplingApiKey)
+        const searchResponse = await smartSearch(messageText, currentSettings.scraplingUrl, currentSettings.scraplingApiKey)
         if (searchResponse.results.length > 0) {
           searchResultsContext = formatSearchResultsForLLM(searchResponse)
         } else {

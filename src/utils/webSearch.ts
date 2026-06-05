@@ -1,11 +1,12 @@
 /**
- * Web Search Utility — scrapling‑based search
+ * Web Search Utility — DuckDuckGo scraper
  *
- * Calls a local Scrapling Python server that scrapes DuckDuckGo HTML results
- * using Scrapling's anti‑bot FetcherSession.  No external API keys required.
+ * Calls a local Python server that scrapes DuckDuckGo HTML results.
+ * Two endpoints: general search (/v1/search) and news search (/v1/search/news).
+ * No external API keys required — pure web scraping.
  *
  * Start the server:
- *   .venv/bin/python models_infer/scrapling_server.py
+ *   python models_infer/scrapling_server.py
  * Default port: 8003
  */
 
@@ -22,8 +23,7 @@ export interface SearchResponse {
 }
 
 /**
- * Check whether the Scrapling search server is running.
- * Returns true if the /health endpoint responds within 2 seconds.
+ * Check whether the search server is running.
  */
 export async function checkScraplingHealth(
   scraplingUrl?: string,
@@ -43,16 +43,66 @@ export async function checkScraplingHealth(
 }
 
 /**
- * Scrapling‑powered web search.
- *
- * @param query          Search query
- * @param scraplingUrl   Scrapling server URL (default http://localhost:8003)
- * @param scraplingApiKey API key for the Scrapling server (default sk-scrapling-demo)
+ * Detect whether a query is asking for news/current events.
+ * Routes to the news-specific endpoint for better results.
+ */
+function isNewsQuery(query: string): boolean {
+  const newsKeywords = [
+    // English
+    'news', 'headlines', 'breaking', 'latest', 'current events',
+    'what happened', 'today', 'this week', 'this month',
+    // Chinese
+    '新闻', '热点', '头条', '热搜', '快讯', '时讯',
+    '今日', '最新', '实时', '本周', '本月', '近期',
+    '发生了', '动态',
+  ]
+  const lower = query.toLowerCase()
+  return newsKeywords.some(kw => lower.includes(kw))
+}
+
+function isHotNewsQuery(query: string): boolean {
+  const hotKeywords = [
+    'hot', 'trending', 'top', 'popular',
+    '热搜', '热度最高', '最热', '热门', '头条',
+    '24小时', '过去24', '今天',
+  ]
+  const lower = query.toLowerCase()
+  return hotKeywords.some(kw => lower.includes(kw))
+}
+
+function isCryptoQuery(query: string): boolean {
+  const cryptoKeywords = [
+    // English
+    'crypto', 'bitcoin', 'btc', 'ethereum', 'eth', 'blockchain',
+    'liquidation', 'liquidity', 'long', 'short', 'futures',
+    'token', 'coin', 'altcoin', 'defi',
+    // Chinese
+    '区块链', '比特币', '以太坊', '币', '合约',
+    '爆仓', '清仓', '做多', '做空', '杠杆',
+    '虚拟货币', '加密货币', '数字资产', 'web3',
+    '行情', '走势', '涨跌',
+  ]
+  const lower = query.toLowerCase()
+  return cryptoKeywords.some(kw => lower.includes(kw))
+}
+
+function isLiquidationQuery(query: string): boolean {
+  const liqKeywords = [
+    'liquidation', 'liquidat', '爆仓', '清仓', '强平',
+  ]
+  const lower = query.toLowerCase()
+  return liqKeywords.some(kw => lower.includes(kw))
+}
+
+/**
+ * General web search.
+ * For news/current events queries, use searchNews() instead.
  */
 export async function webSearch(
   query: string,
   scraplingUrl?: string,
   scraplingApiKey?: string,
+  count: number = 5,
 ): Promise<SearchResponse> {
   const cleanQuery = query.trim()
   if (!cleanQuery) {
@@ -62,7 +112,7 @@ export async function webSearch(
   const baseUrl = scraplingUrl || 'http://localhost:8003'
   const apiKey = scraplingApiKey || 'sk-scrapling-demo'
 
-  console.log('[WebSearch] Scrapling search for:', cleanQuery)
+  console.log('[WebSearch] query:', cleanQuery)
 
   try {
     const response = await fetch(`${baseUrl}/v1/search`, {
@@ -71,30 +121,186 @@ export async function webSearch(
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: cleanQuery, count: 5 }),
+      body: JSON.stringify({ query: cleanQuery, count }),
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Scrapling server HTTP ${response.status}: ${errorText}`)
+      throw new Error(`Server HTTP ${response.status}: ${errorText}`)
     }
 
     const data = await response.json()
-    console.log('[WebSearch] Results:', data.results?.length ?? 0)
+    console.log('[WebSearch] results:', data.results?.length ?? 0)
 
     return {
-      results: (data.results || []).slice(0, 5),
-      provider: data.provider || 'DuckDuckGo (Scrapling)',
+      results: (data.results || []).slice(0, count),
+      provider: data.provider || 'DuckDuckGo',
     }
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error)
-    console.warn('[WebSearch] Scrapling search failed:', errMsg)
+    console.warn('[WebSearch] failed:', errMsg)
     return { results: [], provider: 'none', error: errMsg }
   }
 }
 
 /**
- * Format search results as a human-readable string for LLM context injection.
+ * News-specific search.
+ * Uses the /v1/search/news endpoint which does multi-strategy scraping
+ * to get article-level results instead of site homepages.
+ */
+export async function searchNews(
+  query: string,
+  scraplingUrl?: string,
+  scraplingApiKey?: string,
+  count: number = 15,
+): Promise<SearchResponse> {
+  const cleanQuery = query.trim()
+  if (!cleanQuery) {
+    return { results: [], provider: 'none', error: 'Empty query' }
+  }
+
+  const baseUrl = scraplingUrl || 'http://localhost:8003'
+  const apiKey = scraplingApiKey || 'sk-scrapling-demo'
+
+  console.log('[WebSearch] news query:', cleanQuery)
+
+  try {
+    const response = await fetch(`${baseUrl}/v1/search/news`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: cleanQuery, count }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Server HTTP ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
+    console.log('[WebSearch] news results:', data.results?.length ?? 0)
+
+    return {
+      results: (data.results || []).slice(0, count),
+      provider: data.provider || 'DuckDuckGo News',
+    }
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.warn('[WebSearch] news failed:', errMsg)
+    return { results: [], provider: 'none', error: errMsg }
+  }
+}
+
+/**
+ * Smart search — auto-detects news intent and routes accordingly.
+ * This is the recommended entry point for Chat.tsx.
+ */
+export async function smartSearch(
+  query: string,
+  scraplingUrl?: string,
+  scraplingApiKey?: string,
+): Promise<SearchResponse> {
+  // Liquidation/crypto data → crypto liquidation endpoint
+  if (isLiquidationQuery(query) && isCryptoQuery(query)) {
+    return searchCryptoLiquidation(scraplingUrl, scraplingApiKey, 15)
+  }
+  // Hot/trending news → hot news endpoint (RSS aggregation)
+  if (isHotNewsQuery(query) && isNewsQuery(query)) {
+    return fetchHotNews(scraplingUrl, scraplingApiKey, 15)
+  }
+  // News/current events → news endpoint
+  if (isNewsQuery(query)) {
+    return searchNews(query, scraplingUrl, scraplingApiKey, 15)
+  }
+  // Crypto/general blockchain → general web search
+  if (isCryptoQuery(query)) {
+    return webSearch(query, scraplingUrl, scraplingApiKey, 10)
+  }
+  // General search
+  return webSearch(query, scraplingUrl, scraplingApiKey, 10)
+}
+
+/**
+ * Fetch hot/trending news from the RSS aggregator.
+ * Ignores query — returns top articles from major news sources.
+ */
+export async function fetchHotNews(
+  scraplingUrl?: string,
+  scraplingApiKey?: string,
+  count: number = 15,
+): Promise<SearchResponse> {
+  const baseUrl = scraplingUrl || 'http://localhost:8003'
+  const apiKey = scraplingApiKey || 'sk-scrapling-demo'
+
+  try {
+    const response = await fetch(`${baseUrl}/v1/search/news/hot`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ count }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Server HTTP ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
+    return {
+      results: (data.results || []).slice(0, count),
+      provider: data.provider || 'RSS Aggregator',
+    }
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.warn('[WebSearch] hot news failed:', errMsg)
+    return { results: [], provider: 'none', error: errMsg }
+  }
+}
+
+/**
+ * Crypto liquidation data from Binance public API.
+ */
+export async function searchCryptoLiquidation(
+  scraplingUrl?: string,
+  scraplingApiKey?: string,
+  count: number = 15,
+): Promise<SearchResponse> {
+  const baseUrl = scraplingUrl || 'http://localhost:8003'
+  const apiKey = scraplingApiKey || 'sk-scrapling-demo'
+
+  try {
+    const response = await fetch(`${baseUrl}/v1/search/crypto/liquidation`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ count }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Server HTTP ${response.status}: ${errorText}`)
+    }
+
+    const data = await response.json()
+    return {
+      results: (data.results || []).slice(0, count),
+      provider: data.provider || 'Binance Futures',
+    }
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error)
+    console.warn('[WebSearch] crypto liquidation failed:', errMsg)
+    return { results: [], provider: 'none', error: errMsg }
+  }
+}
+
+/**
+ * Format search results for LLM context injection.
  */
 export function formatSearchResultsForLLM(searchResponse: SearchResponse): string {
   if (searchResponse.results.length === 0) {
@@ -116,27 +322,4 @@ export function formatSearchResultsForLLM(searchResponse: SearchResponse): strin
   })
 
   return lines.join('\n')
-}
-
-/**
- * Check whether a user's message triggers an automatic re‑search.
- */
-export function shouldTriggerAutoSearch(userMessage: string): boolean {
-  const lowerMessage = userMessage.toLowerCase()
-
-  const cnNegative = [
-    '不对', '错了', '不是', '不正确', '错误', '假', '假的',
-    '不是这样', '你说错了', '你搞错了', '重新回答', '再查', '查一下', '搜一下',
-    '是真的吗', '确定吗', '是真的么', '可靠吗', '不对吧', '真的吗',
-  ]
-
-  const enNegative = [
-    'wrong', 'incorrect', 'not right', 'false', 'fake',
-    "that's wrong", "you're wrong", 'not correct', 'are you sure',
-    'search', 'look it up', 'check', 'recheck', 'not sure',
-  ]
-
-  const allKeywords = [...cnNegative, ...enNegative]
-
-  return allKeywords.some(keyword => lowerMessage.includes(keyword))
 }
