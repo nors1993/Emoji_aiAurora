@@ -376,7 +376,7 @@ electron/
 | 🟢 Eyebrow | Dynamic compensation `(1 - eyeScaleY) * 0.5` for auto-adjust when eyes shrink | `src/components/Avatar/AvatarCanvas.tsx` |
 | 🟢 Eyebrow | Adjusted vertical offset for all emotions to ensure eyebrows are always visible | `src/components/Avatar/AvatarCanvas.tsx` |
 
-#### 2026-06-05 — Smart Search Routing & RSS News Aggregation
+#### 2026-06-05 — Non-Commercial License & Smart Search Routing & RSS News Aggregation
 
 | Category | Changes | File |
 |------|---------|------|
@@ -386,6 +386,7 @@ electron/
 | 🔵 Search | Added `/v1/search/news` endpoint on search server | `models_infer/scrapling_server.py` |
 | 🔵 Search | Upgraded scrapling server with multi-UA rotation, httpx fallback, RSS parsing | `models_infer/scrapling_server.py` |
 | 🔵 Search | Switched Chat.tsx from `webSearch` → `smartSearch` | `src/components/Chat/Chat.tsx` |
+| 🔴 License | Replaced MIT with Non-Commercial Use License | `LICENSE`, `README.md` |
 | 🔵 Search | Scrapling dependency now optional — httpx-only mode for basic search | `models_infer/scrapling_server.py` |
 
 #### 2026-05-21 — Security Hardening & Error Handling
@@ -399,13 +400,27 @@ electron/
 | 🟡 弃用API | `.substr(2,9)` → `.substring(2,11)` | `src/stores/chatStore.ts` |
 | 🟡 超时 | `getOllamaModels` 添加 5s 超时控制 | `src/utils/llm.ts` |
 
-### License
+### 许可协议 / License
 
-MIT
+**非商业使用许可 (Non-Commercial Use License)** — 详见 [LICENSE](./LICENSE)
+
+允许个人学习、研究、非商业组织使用。**禁止任何形式的商业使用**。如需商业授权请联系作者。
+
+> 原 MIT 协议已替换为非商业许可。详见 [LICENSE 文件](./LICENSE)。
 
 ---
 
 ## English
+
+### License
+
+**Non-Commercial Use License** — see [LICENSE](./LICENSE)
+
+Permitted for personal learning, research, and non-commercial use. **Commercial use is strictly prohibited.** Contact the author for commercial licensing.
+
+---
+
+
 
 ### Overview
 
@@ -595,4 +610,4 @@ Then enable web search in Settings and click the 🔍 search icon in chat. Zero 
 
 ### License
 
-MIT
+**Non-Commercial Use License** — see [LICENSE](./LICENSE)

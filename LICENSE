@@ -1,0 +1,60 @@
+# 非商业使用许可协议
+# Non-Commercial Use License
+
+**Version 1.0, 2026-06-05**
+**版权所有 (Copyright © 2026 nors1993)**
+
+## 1. 许可声明 / License Grant
+
+本协议授予您非独占的、不可转让的、免费的许可，在遵守以下条款的前提下使用本软件。
+
+This license grants you a non-exclusive, non-transferable, free license to use this software subject to the following terms.
+
+## 2. 允许的使用 / Permitted Uses
+
+您可以在以下场景自由使用、复制、修改和分发本软件（包括修改后的版本）：
+
+- ✅ **个人使用** — 个人学习、研究、娱乐
+- ✅ **非商业组织** — 教育机构、非营利组织、开源社区
+- ✅ **贡献改进** — 提交 PR、修复 Bug、功能增强
+- ✅ **学术研究** — 学术论文、科研项目
+
+You may freely use, copy, modify, and distribute this software (including modified versions) for:
+- Personal learning, research, and entertainment
+- Educational institutions, non-profit organizations, open source communities
+- Contributing improvements via PRs, bug fixes, feature enhancements
+- Academic research and scientific projects
+
+## 3. 禁止的使用 / Prohibited Uses
+
+**未经版权持有人书面授权，严禁以下行为：**
+
+- ❌ **商业使用** — 将本软件或其衍生作品用于商业用途，包括但不限于：
+  - 作为商业产品或服务的一部分直接销售
+  - 作为 SaaS 服务向用户收费
+  - 嵌入商业产品或项目中获利
+  - 在本软件基础上提供付费服务或咨询
+  - 通过本软件直接或间接获取商业收入
+- ❌ **商标使用** — 使用项目名称或标识进行商业推广
+- ❌ **误导性分发** — 修改后仍以原始项目名义进行商业分发
+
+**The following are strictly prohibited without written permission from the copyright holder:**
+- Commercial use, including but not limited to:
+  - Selling the software or its derivatives as part of a commercial product
+  - Providing SaaS services that charge users
+  - Embedding in commercial products for profit
+  - Providing paid services or consulting based on this software
+  - Generating commercial revenue directly or indirectly through this software
+- Using project names or logos for commercial promotion
+- Distributing modified versions under the original project name for commercial purposes
+
+## 4. 声明 / Disclaimer
+
+本软件按"原样"提供，不提供任何形式的明示或默示保证，包括但不限于适销性、特定用途适用性和非侵权性的保证。在任何情况下，版权持有人均不对因本软件或使用本软件而产生的任何索赔、损害或其他责任负责。
+
+This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the copyright holder be liable for any claim, damages or other liability arising from the software or the use of the software.
+
+## 5. 联系 / Contact
+
+如需商业授权，请联系：nors1993 （通过 GitHub Issues）
+For commercial licensing, contact: nors1993 (via GitHub Issues)
