@@ -159,10 +159,10 @@ const EYE_CONFIGS: Record<Emotion, EyeConfig> = {
   // 中性 - 正常
   neutral: {
     eyeScale: [1.0, 1.0],
-    pupilScale: 1.0,
+    pupilScale: 0.75,
     pupilOffset: [0, 0],
     isClosed: false,
-    hasSparkle: false,
+    hasSparkle: true,
     isWink: false,
     eyeShape: 'normal',
     pupilDilation: 1.0,
