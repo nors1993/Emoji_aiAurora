@@ -349,12 +349,7 @@ electron/
 └── preload.ts                 # 上下文桥接
 ```
 ### Demo
-
 https://github.com/user-attachments/assets/636499cf-c83a-40d9-9069-d2c19c3bd792
-
-![alt text](image-2.png)
-
-![alt text](image-1.png)
 
 ### Changelog
 
@@ -599,9 +594,7 @@ In Settings → Web Search Settings, configure:
 Then enable web search in Settings and click the 🔍 search icon in chat. Zero cost, no external API keys needed.
 
 ### Demo
-![alt text](image-2.png)
-
-![alt text](image-1.png)
+https://github.com/user-attachments/assets/636499cf-c83a-40d9-9069-d2c19c3bd792
 
 ### License
 
